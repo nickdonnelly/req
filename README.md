@@ -18,4 +18,4 @@ If you wish to suppress the printing of the http headers:
 
 You can also only print the headers:
 
-`req --onlyheader www.google.com`
+`req --headeronly www.google.com`

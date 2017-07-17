@@ -29,15 +29,20 @@ fn main(){
             print_header(res.headers());
         }
 
-        println!("{}", "Response body:".blue());
-        res.body().for_each(|chunk| {
-            io::stdout()
-                .write_all(&chunk)
-                .map_err(From::from)
+        if config.print_body{
+            println!("\n{}", "Response body:".blue());
+        }
+        res.body().for_each(move |chunk| {
+            if config.print_body{
+                io::stdout().write_all(&chunk);
+            }
+            futures::future::result( Ok(()) )
         })
+
     });
 
     core.run(work).expect("Couldn't execute request!");
+
     println!("");
 }
 
@@ -45,6 +50,7 @@ struct Config {
     uri: hyper::Uri,
     method: hyper::Method,
     print_headers: bool,
+    print_body: bool,
 }
 
 impl Config{
@@ -55,11 +61,15 @@ impl Config{
         }
 
         let mut print_headers = true;
+        let mut print_body = true;
 
         for arg in &args[1..(args.len() - 2)] {
             match arg.as_str() {
                 "--noheader" => {
                     print_headers = false;
+                },
+                "--headeronly" => {
+                    print_body = false;
                 },
                 _ => {
                     return Err(format!("Unknown argument: {}", arg).to_owned());
@@ -86,7 +96,8 @@ impl Config{
         Ok(Config{
             uri: uri,
             method: method,
-            print_headers: print_headers
+            print_headers: print_headers,
+            print_body: print_body,
         })
     }
 }
@@ -122,5 +133,4 @@ fn print_header(headers: &hyper::Headers){
     for header in headers.iter().collect::<Vec<hyper::header::HeaderView>>(){
         println!("{}: {}", header.name().magenta(), header.value_string());
     }
-    println!("");
 }
