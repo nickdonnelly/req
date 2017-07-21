@@ -33,10 +33,9 @@ fn main(){
 
 fn run(config: &Config) -> Result<(), String>{
     let mut headereditor: HeaderEditor = HeaderEditor::new();
+    headereditor.set_default_headers();
     if config.custom_headers {
         headereditor.start();
-    }else{
-        headereditor.set_default_headers();
     }
 
     let mut core = Core::new().expect("Couldn't create a reactor core!");

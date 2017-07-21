@@ -96,11 +96,12 @@ impl HeaderEditor {
 
     /// Write all the current headers in the HeaderEditor to request_headers to be
     /// attached to a request. 
-    /// NOTE: This will overwrite any headers that already exist. For example, if you
-    /// try to write the Content-Type header and it was already written by 
+    /// NOTE: This may overwrite any headers that already exist (with some exceptions).
+    /// For example, if you try to write the Content-Type header and it was already written by 
     /// `set_default_headers`, then it will be overwritten with the `HeaderEditor`'s version.
     pub fn write_all_headers(&self, request_headers: &mut hyper::header::Headers) {
         for header in &self.headers {
+            request_headers.remove_raw(header.field.as_str());
             request_headers.set_raw(header.field.clone(), header.value.clone());
         }
     }
