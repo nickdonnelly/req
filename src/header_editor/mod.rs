@@ -1,3 +1,4 @@
+extern crate hyper;
 extern crate colored;
 
 use std;
@@ -24,6 +25,10 @@ impl HeaderEditor {
         }
     }
 
+    /// Sets the default headers for a generic HTTP request. This will set
+    /// things like Content-Type to text/plain. The headers set by this method
+    /// will be overwritten by user input if the user inputs a header that was
+    /// already defined here.
     pub fn set_default_headers(&mut self){
         // TODO: Add default headers here
     }
@@ -36,6 +41,9 @@ impl HeaderEditor {
     /// headers are invalid if the field of the header contains whitespace after
     /// trimming.
     pub fn start(&mut self){
+        // Clear the terminal with magic control character, we will use the whole screen
+        print!("{}[2J", 27 as char);
+
         let mut lines: Vec<String> = Vec::new();
         println!("{}", "Header Editor".red());
         println!("{} {}", "Type headers of the form: \n".blue(), "FieldName: Value".green());
@@ -83,8 +91,18 @@ impl HeaderEditor {
     /// This function performs no validations, and assumes that you have validated
     /// the headers yourself (this can be done with `ReqHeader`).
     pub fn add_header(&mut self, header: ReqHeader) {
-        println!("Adding header {}", &header);
         self.headers.push(header);
+    }
+
+    /// Write all the current headers in the HeaderEditor to request_headers to be
+    /// attached to a request. 
+    /// NOTE: This will overwrite any headers that already exist. For example, if you
+    /// try to write the Content-Type header and it was already written by 
+    /// `set_default_headers`, then it will be overwritten with the `HeaderEditor`'s version.
+    pub fn write_all_headers(&self, request_headers: &mut hyper::header::Headers) {
+        for header in &self.headers {
+            request_headers.set_raw(header.field.clone(), header.value.clone());
+        }
     }
 }
 

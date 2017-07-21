@@ -1,6 +1,7 @@
 extern crate reqlib;
 extern crate futures;
 extern crate hyper;
+extern crate hyper_tls;
 extern crate tokio_core;
 extern crate colored;
 
@@ -39,7 +40,9 @@ fn run(config: &Config) -> Result<(), String>{
     }
 
     let mut core = Core::new().expect("Couldn't create a reactor core!");
-    let client = Client::new(&core.handle());
+    let client = Client::configure()
+        .connector(hyper_tls::HttpsConnector::new(4, &core.handle()).unwrap())
+        .build(&core.handle());
 
     let request = hyper::Request::new(config.method.clone(), config.uri.clone());
     let work = client.request(request).and_then(move |res| {
@@ -159,7 +162,7 @@ fn print_response_code(code: hyper::StatusCode){
 }
 
 fn print_header(headers: &hyper::Headers){
-    println!("{}", "Headers:".magenta());
+    println!("{}", "Reponse Headers:".magenta());
     for header in headers.iter().collect::<Vec<hyper::header::HeaderView>>(){
         println!("{}: {}", header.name().magenta(), header.value_string());
     }
