@@ -21,6 +21,16 @@ fn main(){
     }
     let config = config.unwrap();
 
+    let result = run(&config);
+    if result.is_err() {
+        eprintln!("Error: {}", result.err().unwrap()); // The errors are guaranteed to be non-empty
+        std::process::exit(1); // close w/ non-zero exit code
+    }
+
+    println!("");
+}
+
+fn run(config: &Config) -> Result<(), String>{
     let mut headereditor: HeaderEditor = HeaderEditor::new();
     if config.custom_headers {
         headereditor.start();
@@ -50,9 +60,11 @@ fn main(){
 
     });
 
-    core.run(work).expect("Couldn't execute request!");
-
-    println!(""); // pad output with one newline
+    let core_result = core.run(work);
+    if core_result.is_err() {
+        return Err(format!("{}", "Reactor core couldn't complete work! Perhaps the result was malformed?".red()));
+    }
+    Ok(())
 }
 
 struct Config {
