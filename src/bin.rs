@@ -44,7 +44,9 @@ fn run(config: &Config) -> Result<(), String>{
         .connector(hyper_tls::HttpsConnector::new(4, &core.handle()).unwrap())
         .build(&core.handle());
 
-    let request = hyper::Request::new(config.method.clone(), config.uri.clone());
+    let mut request = hyper::Request::new(config.method.clone(), config.uri.clone());
+    headereditor.write_all_headers(request.headers_mut());
+
     let work = client.request(request).and_then(move |res| {
         print_response_code(res.status());
         if config.print_headers {
@@ -158,7 +160,6 @@ fn print_response_code(code: hyper::StatusCode){
     }else{
         println!("{}", code);
     }
-    println!("");
 }
 
 fn print_header(headers: &hyper::Headers){
