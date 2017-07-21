@@ -3,3 +3,5 @@
 Cargo.lock
 *.swp #vim files
 .swp
+.*.sw*
+*.sw*
