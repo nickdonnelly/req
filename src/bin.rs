@@ -1,3 +1,4 @@
+extern crate reqlib;
 extern crate futures;
 extern crate hyper;
 extern crate tokio_core;
@@ -10,6 +11,7 @@ use tokio_core::reactor::Core;
 use hyper::Client;
 use colored::*;
 
+use reqlib::header_editor::HeaderEditor;
 
 fn main(){
     let config = Config::new();
@@ -18,6 +20,13 @@ fn main(){
         std::process::exit(1);
     }
     let config = config.unwrap();
+
+    let mut headereditor: HeaderEditor = HeaderEditor::new();
+    if config.custom_headers {
+        headereditor.start();
+    }else{
+        headereditor.set_default_headers();
+    }
 
     let mut core = Core::new().expect("Couldn't create a reactor core!");
     let client = Client::new(&core.handle());
@@ -43,7 +52,7 @@ fn main(){
 
     core.run(work).expect("Couldn't execute request!");
 
-    println!("");
+    println!(""); // pad output with one newline
 }
 
 struct Config {
@@ -51,9 +60,13 @@ struct Config {
     method: hyper::Method,
     print_headers: bool,
     print_body: bool,
+    custom_headers: bool,
 }
 
 impl Config{
+    // This is a big function but it's relatively simple, just parsing the arguments
+    // one by one. This could be done more simply using a HashMap or something, and will
+    // probably be transitioned there in the future. For now, it works.
     fn new() -> Result<Config, String>{
         let args: Vec<String> = env::args().collect();
         if args.len() < 3 {
@@ -62,6 +75,7 @@ impl Config{
 
         let mut print_headers = true;
         let mut print_body = true;
+        let mut custom_headers = false;
 
         for arg in &args[1..(args.len() - 2)] {
             match arg.as_str() {
@@ -70,6 +84,9 @@ impl Config{
                 },
                 "--headeronly" => {
                     print_body = false;
+                },
+                "--customheaders" => {
+                    custom_headers = true
                 },
                 _ => {
                     return Err(format!("Unknown argument: {}", arg).to_owned());
@@ -98,6 +115,7 @@ impl Config{
             method: method,
             print_headers: print_headers,
             print_body: print_body,
+            custom_headers: custom_headers,
         })
     }
 }
