@@ -55,7 +55,7 @@ impl HeaderEditor {
             let mut line: String = String::new();
             let result = reader.read_line(&mut line);
             if result.is_err(){
-                println!("There was a problem reading from stdin!");
+                println!("{}", "There was a problem reading from stdin!".red());
                 std::process::exit(2);
             }
 

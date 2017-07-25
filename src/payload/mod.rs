@@ -1,10 +1,11 @@
 extern crate hyper;
 extern crate colored;
 
-use std;
 use self::hyper::Body;
 
-enum EncodingType {
+pub mod editor;
+
+pub enum EncodingType {
     UTF8,
     UTF16,
 }

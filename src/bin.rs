@@ -13,7 +13,9 @@ use hyper::Client;
 use colored::*;
 
 use reqlib::header_editor::HeaderEditor;
+use reqlib::payload::editor;
 
+// DONT FORGET TO REVERT
 fn main(){
     let config = Config::new();
     if config.is_err(){
