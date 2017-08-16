@@ -55,3 +55,10 @@ impl From<Vec<u8>> for Payload {
         }
     }
 }
+
+impl Into<Body> for Payload {
+
+    fn into(self) -> Body {
+        self.body
+    }
+}

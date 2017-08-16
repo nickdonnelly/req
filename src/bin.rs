@@ -26,7 +26,7 @@ fn main(){
 
     let result = run(&config);
     if result.is_err() {
-        eprintln!("Error: {}", result.err().unwrap()); // The errors are guaranteed to be non-empty
+        println!("Error: {}", result.err().unwrap()); // The errors are guaranteed to be non-empty
         std::process::exit(1); // close w/ non-zero exit code
     }
 
@@ -35,9 +35,15 @@ fn main(){
 
 fn run(config: &Config) -> Result<(), String>{
     let mut headereditor: HeaderEditor = HeaderEditor::new();
+    let mut payloadeditor: editor::PayloadEditor = editor::new();
+
     headereditor.set_default_headers();
     if config.custom_headers {
         headereditor.start();
+    }
+
+    if config.custom_payload {
+        payloadeditor.start();
     }
 
     let mut core = Core::new().expect("Couldn't create a reactor core!");
@@ -47,6 +53,7 @@ fn run(config: &Config) -> Result<(), String>{
 
     let mut request = hyper::Request::new(config.method.clone(), config.uri.clone());
     headereditor.write_all_headers(request.headers_mut());
+    request.set_body(payloadeditor.get_payload());
 
     let work = client.request(request).and_then(move |res| {
         print_response_code(res.status());
@@ -79,6 +86,7 @@ struct Config {
     print_headers: bool,
     print_body: bool,
     custom_headers: bool,
+    custom_payload: bool,
 }
 
 impl Config{
@@ -94,6 +102,7 @@ impl Config{
         let mut print_headers = true;
         let mut print_body = true;
         let mut custom_headers = false;
+        let mut custom_payload = false;
 
         for arg in &args[1..(args.len() - 2)] {
             match arg.as_str() {
@@ -105,6 +114,9 @@ impl Config{
                 },
                 "--customheaders" => {
                     custom_headers = true
+                },
+                "--enter-payload" => {
+                    custom_payload = true
                 },
                 _ => {
                     return Err(format!("Unknown argument: {}", arg).to_owned());
@@ -134,6 +146,7 @@ impl Config{
             print_headers: print_headers,
             print_body: print_body,
             custom_headers: custom_headers,
+            custom_payload: custom_payload,
         })
     }
 }

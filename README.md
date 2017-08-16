@@ -24,6 +24,14 @@ If you want to modify the headers yourself, use:
 
 `req --customheaders put www.google.com`
 
+If you want to manually enter text into the request body, use:
+
+`req --enter-payload get www.google.com`
+
+If you want to use a payload from a file, use:
+`req --payload-file filename.ext get google.com`
+
+
 ## Supported methods
 
 All normal HTTP request methods are supported:
