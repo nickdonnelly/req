@@ -36,6 +36,7 @@ fn main(){
 fn run(config: &Config) -> Result<(), String>{
     let mut headereditor: HeaderEditor = HeaderEditor::new();
     let mut payloadeditor: editor::PayloadEditor = editor::new();
+    let mut configcopy = config.clone();
 
     headereditor.set_default_headers();
     if config.custom_headers {
@@ -51,32 +52,85 @@ fn run(config: &Config) -> Result<(), String>{
         .connector(hyper_tls::HttpsConnector::new(4, &core.handle()).unwrap())
         .build(&core.handle());
 
-    let mut request = hyper::Request::new(config.method.clone(), config.uri.clone());
-    headereditor.write_all_headers(request.headers_mut());
-    request.set_body(payloadeditor.get_payload());
+    //let mut redirect_url: Option<String> = None;
 
-    let work = client.request(request).and_then(move |res| {
-        print_response_code(res.status());
-        if config.print_headers {
-            print_header(res.headers());
-        }
+    //loop {
+        let mut request: hyper::Request;
+        
+     //   let uri = match redirect_url {
+     //       None => Ok(config.uri.clone()),
+     //       Some(x) => to_uri(x),
+     //   };
+     //   if uri.is_err(){
+     //       return Err(format!("{}", "Couldn't parse URL!".red()));
+     //   }
+     //   let uri = uri.unwrap();
+        let uri = config.uri.clone();
+        request = hyper::Request::new(config.method.clone(), uri);
+        headereditor.write_all_headers(request.headers_mut());
+        request.set_body(payloadeditor.get_payload());
 
-        if config.print_body{
-            println!("\n{}", "Response body:".blue());
-        }
-        res.body().for_each(move |chunk| {
-            if config.print_body{
-                io::stdout().write_all(&chunk);
+        let work = client.request(request).and_then(move |res| {
+            print_response_code(res.status());
+            if config.print_headers {
+                print_header(res.headers());
             }
-            futures::future::result( Ok(()) )
-        })
 
-    });
+            if config.print_body{
+                println!("\n{}", "Response body:".blue());
+            }
+            let redirected = res.status() == hyper::StatusCode::TemporaryRedirect || res.status() == hyper::StatusCode::PermanentRedirect || res.status() == hyper::StatusCode::Found || res.status() == hyper::StatusCode::MovedPermanently;
+            let resheaders = res.headers().clone();
+            res.body().for_each(move |chunk| {
+                if config.print_body{
+                    io::stdout().write_all(&chunk);
+                }
 
-    let core_result = core.run(work);
-    if core_result.is_err() {
-        return Err(format!("{}", "Reactor core couldn't complete work! Perhaps the result was malformed?".red()));
+                if redirected {
+                    for header in resheaders.iter().collect::<Vec<hyper::header::HeaderView>>() {
+                        if header.name().to_lowercase().trim() == "location" {
+                            let location = to_uri(header.value_string());
+                            if location.is_err() {
+                                println!("{}", "Redirect did not contain location header!".red());
+                                std::process::exit(0);
+                            }
+                            let location = location.unwrap();
+                            
+                            println!("\n{}", "Executing redirect...".magenta());
+                            let new_uri = to_uri(format!("{}", location));
+                            if new_uri.is_err() {
+                                println!("{}", "Error: invalid redirect url.".red());
+                                std::process::exit(3);
+                            }
+                            let new_config = Config {
+                                uri: new_uri.unwrap(),
+                                method: config.method.clone(),
+                                print_headers: config.print_headers,
+                                print_body: config.print_body,
+                                custom_headers: false,
+                                custom_payload: false,
+                                follow_redirects: true
+                                };
+                            run(&new_config);        
+                            break;
+                        }
+                    }
+                    
+                }
+                futures::future::result( Ok(()) )
+            })
+
+        });
+
+        let core_result = core.run(work);
+        if core_result.is_err() {
+            return Err(format!("{}", "Reactor core couldn't complete work! Perhaps the result was malformed?".red()));
+        //}
+        
+        
     }
+
+    
     Ok(())
 }
 
@@ -87,6 +141,7 @@ struct Config {
     print_body: bool,
     custom_headers: bool,
     custom_payload: bool,
+    follow_redirects: bool,
 }
 
 impl Config{
@@ -103,6 +158,8 @@ impl Config{
         let mut print_body = true;
         let mut custom_headers = false;
         let mut custom_payload = false;
+        let mut follow_redirects = false;
+        //let mut payload_file: Option<String> = None;
 
         for arg in &args[1..(args.len() - 2)] {
             match arg.as_str() {
@@ -118,6 +175,13 @@ impl Config{
                 "--enter-payload" => {
                     custom_payload = true
                 },
+                "--follow-redirects" => {
+                    follow_redirects = true
+                },
+                //"--enter-payload" => {
+                    // FIX THIS!
+                    //payload_file = Some(String::new())
+                //},
                 _ => {
                     return Err(format!("Unknown argument: {}", arg).to_owned());
                 }
@@ -147,7 +211,12 @@ impl Config{
             print_body: print_body,
             custom_headers: custom_headers,
             custom_payload: custom_payload,
+            follow_redirects: follow_redirects,
         })
+    }
+
+    pub fn update_uri(&mut self, new_uri: hyper::Uri){
+        self.uri = new_uri;
     }
 }
 
@@ -181,4 +250,22 @@ fn print_header(headers: &hyper::Headers){
     for header in headers.iter().collect::<Vec<hyper::header::HeaderView>>(){
         println!("{}: {}", header.name().magenta(), header.value_string());
     }
+}
+
+fn to_uri(url: String) -> Result<hyper::Uri, String>{
+    let uri = url.parse::<hyper::Uri>();
+    if uri.is_err() {
+        return Err(String::from("Couldn't parse url"));
+    }
+
+    let mut uri = uri.unwrap();
+    // Check URI scheme.
+    if uri.scheme().is_none(){
+        let mut uri_corrected: String = String::from("http://");
+        uri_corrected.push_str(uri.to_string().as_str());
+        let uri_corrected = uri_corrected.parse::<hyper::Uri>().expect("Not a valid URL!");
+        uri = uri_corrected;
+    }
+
+    Ok(uri)
 }

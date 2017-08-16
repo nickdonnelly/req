@@ -24,12 +24,17 @@ If you want to modify the headers yourself, use:
 
 `req --customheaders put www.google.com`
 
+To follow redirects, use (note: currently following redirects only sends the payload and the headers you specify to the initial host, not the redirected host.):
+
+`req --follow-redirects get www.google.com`
+
 If you want to manually enter text into the request body, use:
 
 `req --enter-payload get www.google.com`
 
 If you want to use a payload from a file, use:
-`req --payload-file filename.ext get google.com`
+`req --payload-file filename.ext get www.google.com`
+
 
 
 ## Supported methods
