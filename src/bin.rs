@@ -12,8 +12,9 @@ use tokio_core::reactor::Core;
 use hyper::Client;
 use colored::*;
 
-use reqlib::header_editor::HeaderEditor;
-use reqlib::payload::editor;
+//use reqlib::header_editor::HeaderEditor;
+//use reqlib::payload::editor;
+use reqlib::editor::{self,Editor};
 
 // DONT FORGET TO REVERT
 fn main(){
@@ -34,17 +35,18 @@ fn main(){
 }
 
 fn run(config: &Config) -> Result<(), String>{
-    let mut headereditor: HeaderEditor = HeaderEditor::new();
-    let mut payloadeditor: editor::PayloadEditor = editor::new();
+    let mut headereditor: editor::HeaderEditor = editor::HeaderEditor::new();
+    let mut payloadeditor: editor::PayloadEditor = editor::PayloadEditor::new();
+    let mut headerlines: Vec<String> = Vec::new();
+    let mut payloadlines: Vec<String> = Vec::new();
     let mut configcopy = config.clone();
 
-    headereditor.set_default_headers();
     if config.custom_headers {
-        headereditor.start();
+        headereditor.start(&mut headerlines);
     }
 
     if config.custom_payload {
-        payloadeditor.start();
+        payloadeditor.start(&mut payloadlines);
     }
 
     let mut core = Core::new().expect("Couldn't create a reactor core!");
@@ -67,8 +69,9 @@ fn run(config: &Config) -> Result<(), String>{
      //   let uri = uri.unwrap();
         let uri = config.uri.clone();
         request = hyper::Request::new(config.method.clone(), uri);
-        headereditor.write_all_headers(request.headers_mut());
-        request.set_body(payloadeditor.get_payload());
+        headereditor.set_default_headers(request.headers_mut());
+        headereditor.write_all_headers(&headerlines, request.headers_mut());
+        request.set_body(editor::PayloadEditor::as_payload(&payloadlines));
 
         let work = client.request(request).and_then(move |res| {
             print_response_code(res.status());
@@ -86,7 +89,7 @@ fn run(config: &Config) -> Result<(), String>{
                     io::stdout().write_all(&chunk);
                 }
 
-                if redirected {
+                if redirected && config.follow_redirects {
                     for header in resheaders.iter().collect::<Vec<hyper::header::HeaderView>>() {
                         if header.name().to_lowercase().trim() == "location" {
                             let location = to_uri(header.value_string());

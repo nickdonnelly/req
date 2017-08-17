@@ -5,6 +5,7 @@ use std;
 use std::io;
 use self::colored::*;
 
+
 #[derive(Debug)]
 pub struct ReqHeader {
     field: String,
@@ -15,7 +16,7 @@ pub struct HeaderEditor {
     headers: Vec<ReqHeader>,    
 }
 
-mod parser;
+pub mod parser;
 
 impl HeaderEditor {
     pub fn new() -> Self {

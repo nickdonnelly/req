@@ -1,5 +1,6 @@
 pub mod header_editor;
 pub mod payload;
+pub mod editor;
 
 #[cfg(test)]
 mod tests {
