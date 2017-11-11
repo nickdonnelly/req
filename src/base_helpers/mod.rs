@@ -28,8 +28,39 @@ impl ReqConfig {
         }
     }
 
+    /// Consumes the given config and produces one that contains
+    /// the provided command.
     pub fn command(mut self, cmd: ReqCommand) -> ReqConfig {
         self.command = cmd; 
+        self
+    }
+
+    /// Consumes the given config and produces one that contains
+    /// the provided host.
+    pub fn host(mut self, host: String) -> ReqConfig {
+        self.host = Some(host);
+        self
+    }
+
+
+    /// Consumes the given config and produces one that contains
+    /// the provided host.
+    pub fn host_str(mut self, host: &str) -> ReqConfig {
+        self.host = Some(String::from(host));
+        self
+    }
+
+    /// Consumes the given config and produces one that contains
+    /// the provided port.
+    pub fn port(mut self, port: usize) -> ReqConfig {
+        self.port = Some(port);
+        self
+    }
+
+    /// Consumes the given config and produces one that contains
+    /// the provided timeout.
+    pub fn timeout(mut self, timeout: usize) -> ReqConfig {
+        self.timeout = Some(timeout);
         self
     }
 
@@ -57,6 +88,13 @@ impl ReqConfig {
     /// the provided options. Does not preserve old options. 
     pub fn options(mut self, opts: Vec<ReqOption>) -> ReqConfig {
         self.options = Some(opts);
+        self
+    }
+
+    /// Consumes the given config and produces one that contains
+    /// the provided payload.
+    pub fn payload(mut self, payload: Payload) -> ReqConfig {
+        self.payload = Some(payload);
         self
     }
 
@@ -98,16 +136,39 @@ impl ReqConfig {
     }
 }
 
+impl Payload {
+    pub fn new(data: Vec<u8>, content_type: &str) -> Payload {
+        Payload {
+            data: data,
+            content_type: String::from(content_type)
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Req, ReqConfig, ReqCommand, RequestMethod};
+    use super::{Payload, Req, ReqConfig, ReqCommand, RequestMethod};
 
     #[test]
-    fn new_client_configures_correctly_1() {
-        //let config = ReqConfig {
-            //command: ReqCommand::Request(RequestMethod::Get),
-            //options: None
-        //};
-        // TODO: Use multiple asserts here.
+    fn new_client_configures_correctly() {
+        let config = ReqConfig {
+            command: ReqCommand::Request(RequestMethod::Get),
+            host: Some(String::from("www.google.com")),
+            port: Some(443),
+            timeout: Some(10000),
+            payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
+            options: None
+        };
+
+        let pl = Payload::new(vec![1,2,3], "application/octet-stream");
+
+        let mut built_config = ReqConfig::new()
+            .command(ReqCommand::Request(RequestMethod::Get))
+            .host(String::from("www.google.com"))
+            .port(443)
+            .payload(pl)
+            .timeout(10000);
+
+        assert_eq!(config, built_config);
     }
 }

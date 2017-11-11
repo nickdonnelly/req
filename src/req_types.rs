@@ -13,9 +13,10 @@ type Result<T> = result::Result<T, ReqError>;
 pub const HELP_STR: &str = "Help String goes here";
 
 /// The type consumed as a payload (direct bytes that will be written).
+#[derive(Debug, PartialEq)]
 pub struct Payload {
-    data: Vec<u8>,
-    content_type: String // maybe use enum type
+    pub data: Vec<u8>,
+    pub content_type: String // maybe use enum type
 }
 
 /// Generic error type. Exit code may be ignored if it is zero.
@@ -89,7 +90,7 @@ impl FromStr for ReqCommand {
         // Match the request types first, this is easy;
         let request_type = RequestMethod::from_str(s);
 
-        if(request_type.is_ok()) {
+        if request_type.is_ok() {
             Ok(ReqCommand::Request(request_type.unwrap()))
         } else {
             match s.trim().to_lowercase().as_str() {
@@ -103,6 +104,7 @@ impl FromStr for ReqCommand {
 }
 
 /// The master config type.
+#[derive(Debug, PartialEq)]
 pub struct ReqConfig {
     pub command: ReqCommand,
     pub host: Option<String>,
