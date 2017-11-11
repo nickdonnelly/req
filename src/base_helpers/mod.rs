@@ -1,5 +1,6 @@
 pub use super::req_types::*;
 
+use std::str::FromStr;
 use std::fmt;
 use std::fmt::{ Formatter, Display };
 use std::result;
@@ -72,12 +73,16 @@ impl ReqConfig {
             let mref = &mut self;
             match key.as_str() {
                 "REQ_DEFAULT_HOST" => mref.host = Some(value),
-                _ => {}
-                //"REQ_DEFAULT_PORT" => mref.port = Some(value),
-                //"REQ_DEFAULT_HTTP_METHOD" => mref.command = Some(value),
+                "REQ_DEFAULT_PORT" => mref.port = Some(value.trim().parse()
+                    .expect("REQ_DEFAULT_PORT invalid")),
+                "REQ_DEFAULT_HTTP_METHOD" => mref.command = 
+                    ReqCommand::Request(
+                        RequestMethod::from_str(value.as_str())
+                        .expect("REQ_DEFAULT_HTTP_METHOD invalid")),
                 //"REQ_DEFAULT_COMMAND" => mref.command = value,
                 //"REQ_DEFAULT_TIMEOUT" => mref.timeout = Some(value),
                 //"REQ_DEFAULT_PAYLOAD_FILE" => mref.payload = Some(Payload::from_file(value))
+                _ => {}
             }
         }
 
@@ -96,12 +101,13 @@ impl ReqConfig {
 #[cfg(test)]
 mod tests {
     use super::{Req, ReqConfig, ReqCommand, RequestMethod};
+
     #[test]
     fn new_client_configures_correctly_1() {
-        let config = ReqConfig {
-            command: ReqCommand::Request(RequestMethod::Get),
-            options: None
-        };
+        //let config = ReqConfig {
+            //command: ReqCommand::Request(RequestMethod::Get),
+            //options: None
+        //};
         // TODO: Use multiple asserts here.
     }
 }
