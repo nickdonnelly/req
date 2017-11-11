@@ -1,39 +1,13 @@
-pub mod header_editor;
-pub mod payload;
-pub mod editor;
+extern crate hyper;
+extern crate hyper_tls;
+extern crate tokio_core;
+
+mod base_helpers;
+mod req_types;
+
+pub use base_helpers::*;
 
 #[cfg(test)]
 mod tests {
-    use header_editor::ReqHeader;
-    
-    #[test]
-    fn validate_good_headers(){
-        let headers: Vec<String> = vec![
-            String::from("Content-Type: text/html"),
-            String::from("HeaderName: value"),
-            String::from("Header_Title: value123 jlasdfj;sjf aw@#%^@^"),
-            String::from("Still-Val-I_d: this is a value"),
-        ];
-        for header in headers {
-            let h = ReqHeader::from_string(&header);
-
-            assert!(h.is_ok());
-        }
-    }
-
-    #[test]
-    #[should_panic]
-    fn invalidate_bad_headers(){
-        let headers: Vec<String> = vec![
-            String::from("Content Type: text/html"),
-            String::from("Header~Name: value"),
-            String::from("Header_Title: value123 ¢jlasdfj;sjf aw@#%^@^"),
-        ];
-        for header in headers {
-            let h = ReqHeader::from_string(&header);
-
-            assert!(h.is_ok());
-        }
-    }
 
 }
