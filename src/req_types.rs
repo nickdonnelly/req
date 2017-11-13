@@ -42,8 +42,6 @@ pub enum ReqOption {
 /// Master struct for the actual requesting
 pub struct Req {
     cfg: ReqConfig,
-    client: Option<Client<
-        HttpsConnector<HttpConnector>, Body>>
 }
 
 /// The trait that represents a resource of req.
@@ -178,20 +176,9 @@ impl Req {
     /// Get a new Req instance from a config.
     pub fn new_from_cfg(cfg: ReqConfig) 
         -> Result<Req> {
-        let mut core = Core::new();
-        if core.is_err() {
-            return Err(ReqError { 
-                exit_code: 2, 
-                description: "Unable to fetch event loop."});
-        }
-        let handle = core.unwrap().handle();
-        let client = Client::configure()
-            .connector(HttpsConnector::new(4, &handle).unwrap())
-            .build(&handle);
-        
+      
         Ok(Req{
             cfg: cfg,
-            client: Some(client)
         })
     }
 
@@ -242,16 +229,35 @@ impl Req {
 
     fn run_request(&self) -> Result<ReqCommandResult> {
         use hyper::{ Request, Uri };
+        use futures::Future;
 
         let err: Option<ReqError> = self.validate_config_request();
         if err.is_some() {
             return Err(err.unwrap());
         }
 
-        let mut request: Request;
         let host_str = self.cfg.host.clone().unwrap();
         let meth = self.cfg.command.as_method().unwrap();
-        let uri = Uri::from_str(host_str.as_str());
+        let uri = Uri::from_str(host_str.as_str()).unwrap();
+
+        let mut core = Core::new();
+        if core.is_err() {
+            return Err(ReqError { 
+                exit_code: 2, 
+                description: "Unable to fetch event loop."});
+        }
+ 
+        let request = Request::new(meth, uri); 
+        let mut core = core.unwrap();
+        let handle = core.handle();
+        let client = Client::configure()
+            .connector(HttpsConnector::new(4, &handle).unwrap())
+            .build(&handle);
+ 
+        let work = client.request(request).map(|_|{
+            println!("yaY");
+        });
+        let core_result = core.run(work);
 
         Ok(ReqCommandResult::new_stub())
     }
