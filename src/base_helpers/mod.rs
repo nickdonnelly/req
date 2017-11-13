@@ -151,17 +151,20 @@ impl Payload {
 #[cfg(test)]
 mod tests {
     use super::{Payload, Req, ReqConfig, ReqCommand, RequestMethod};
-
-    #[test]
-    fn new_client_configures_correctly() {
-        let config = ReqConfig {
+    fn configuration_optionless() -> ReqConfig {
+        ReqConfig {
             command: ReqCommand::Request(RequestMethod::Get),
             host: Some(String::from("www.google.com")),
             port: Some(443),
             timeout: Some(10000),
             payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
             options: None
-        };
+        }
+    }
+
+    #[test]
+    fn new_client_configures_correctly() {
+        let config = configuration_optionless();
 
         let pl = Payload::new(vec![1,2,3], "application/octet-stream");
 
