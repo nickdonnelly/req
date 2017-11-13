@@ -13,9 +13,6 @@ impl Display for ReqError {
 }
 
 impl ReqConfig {
-    // TODO: Method for each of the config options
-    // that act as a builder
-
     /// Instantiates a new, blank config.
     pub fn new() -> ReqConfig {
         ReqConfig {
@@ -46,7 +43,13 @@ impl ReqConfig {
     /// Consumes the given config and produces one that contains
     /// the provided host.
     pub fn host_str(mut self, host: &str) -> ReqConfig {
-        self.host = Some(String::from(host));
+        if host.starts_with("http") {
+            self.host = Some(String::from(host));
+        } else {
+            let mut s = String::from("http://");
+            s.push_str(host);
+            self.host = Some(s)
+        }
         self
     }
 

@@ -4,7 +4,7 @@ extern crate tokio_core;
 
 mod base_helpers;
 mod req_types;
-mod options;
+pub mod options;
 
 pub use base_helpers::*;
 
