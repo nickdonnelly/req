@@ -1,3 +1,4 @@
+#![allow(non_snake_case)]
 extern crate hyper;
 extern crate hyper_tls;
 extern crate tokio_core;

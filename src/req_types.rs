@@ -2,9 +2,11 @@ use hyper::Method;
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 use hyper::{ Body, Client };
+use futures::Stream;
 use tokio_core::reactor::Core;
 use super::options::*;
 
+use std::io::{self, Write};
 use std::result;
 use std::str::FromStr;
 
@@ -254,8 +256,21 @@ impl Req {
             .connector(HttpsConnector::new(4, &handle).unwrap())
             .build(&handle);
  
-        let work = client.request(request).map(|_|{
-            println!("yaY");
+        let work = client.request(request).map(|res| {
+            let body = res.body().collect().wait();
+            if body.is_err() {
+                return Err(ReqError {
+                    exit_code: 2,
+                    description: "Error reading body."
+                });
+            }
+
+            let body = body.unwrap();
+            body.iter().for_each(|chunk| {
+                io::stdout()
+                  .write_all(&chunk);
+            });
+            Ok(ReqCommandResult::new_stub())
         });
         let core_result = core.run(work);
 
@@ -285,13 +300,14 @@ mod tests {
     fn test_request_working() {
         let config = ReqConfig {
             command: ReqCommand::Request(RequestMethod::Get),
-            host: Some(String::from("www.google.com")),
+            host: Some(String::from("https://www.google.com")),
             port: Some(443),
             timeout: Some(10000),
             payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
             options: None
         };
         let req = Req::new_from_cfg(config).unwrap();
+        req.run().unwrap();
     }
 
     #[test]

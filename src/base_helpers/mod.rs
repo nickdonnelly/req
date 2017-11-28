@@ -35,7 +35,13 @@ impl ReqConfig {
     /// Consumes the given config and produces one that contains
     /// the provided host.
     pub fn host(mut self, host: String) -> ReqConfig {
-        self.host = Some(host);
+        if host.starts_with("http") {
+            self.host = Some(host);
+        } else { 
+            let mut s = String::from("http://");
+            s.push_str(host.as_str());
+            self.host = Some(s)
+        }
         self
     }
 

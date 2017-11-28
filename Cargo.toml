@@ -9,3 +9,11 @@ hyper-tls = "0.1.2"
 tokio-core = "0.1.10"
 dotenv = "0.10.1"
 futures = "0.1"
+
+[lib]
+name = "reqlib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "req"
+path = "src/bin/main.rs"
