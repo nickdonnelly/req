@@ -10,6 +10,8 @@ use std::io::{self, Write};
 use std::result;
 use std::str::FromStr;
 
+mod display;
+
 type Result<T> = result::Result<T, ReqError>;
 
 // TODO
@@ -22,10 +24,17 @@ pub struct Payload {
     pub content_type: String // maybe use enum type
 }
 
+#[derive(Debug)]
+pub enum FailureCode {
+    NoError,
+    ClientError,
+    IOError
+}
+
 /// Generic error type. Exit code may be ignored if it is zero.
 #[derive(Debug)]
 pub struct ReqError {
-    pub exit_code: u16, // TODO: Make this enum type
+    pub exit_code: FailureCode,
     pub description: &'static str
 }
 
@@ -112,7 +121,7 @@ impl ReqCommand {
         match self {
             &ReqCommand::Request(ref meth) => Ok(meth.as_hyper_method()),
             _ => Err(ReqError { 
-                exit_code: 1,
+                exit_code: FailureCode::ClientError,
                 description: "Bad command type for request."
             })
         }
@@ -245,7 +254,7 @@ impl Req {
         let mut core = Core::new();
         if core.is_err() {
             return Err(ReqError { 
-                exit_code: 2, 
+                exit_code: FailureCode::IOError, 
                 description: "Unable to fetch event loop."});
         }
  
@@ -260,7 +269,7 @@ impl Req {
             let body = res.body().collect().wait();
             if body.is_err() {
                 return Err(ReqError {
-                    exit_code: 2,
+                    exit_code: FailureCode::IOError,
                     description: "Error reading body."
                 });
             }
@@ -282,7 +291,7 @@ impl Req {
     fn validate_config_request(&self) -> Option<ReqError>{
         if self.cfg.host.is_none() {
             return Some(
-                ReqError{ exit_code: 1, description: "No remote host given." }
+                ReqError{ exit_code: FailureCode::ClientError, description: "No remote host given." }
             );
         }
         None

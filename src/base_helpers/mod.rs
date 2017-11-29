@@ -8,7 +8,7 @@ use std::result;
 impl Display for ReqError {
     fn fmt(&self, f: &mut Formatter) ->
         result::Result<(), fmt::Error> {
-            write!(f, "Exited with code {}.\n{}", self.exit_code, self.description)
+            write!(f, "Exited with code {}.\n{}", self.exit_code.value(), self.description)
         }
 }
 
