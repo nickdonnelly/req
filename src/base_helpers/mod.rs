@@ -160,7 +160,7 @@ mod tests {
     fn configuration_optionless() -> ReqConfig {
         ReqConfig {
             command: ReqCommand::Request(RequestMethod::Get),
-            host: Some(String::from("www.google.com")),
+            host: Some(String::from("https://www.google.com")),
             port: Some(443),
             timeout: Some(10000),
             payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
@@ -176,7 +176,7 @@ mod tests {
 
         let mut built_config = ReqConfig::new()
             .command(ReqCommand::Request(RequestMethod::Get))
-            .host(String::from("www.google.com"))
+            .host(String::from("https://www.google.com"))
             .port(443)
             .payload(pl)
             .timeout(10000);

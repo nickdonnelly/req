@@ -1,14 +1,35 @@
 extern crate reqlib;
+extern crate dotenv;
 use reqlib::*;
+use dotenv::dotenv;
+use std::process;
 
 fn main() {
-    let config = ReqConfig {
-        command: ReqCommand::Request(RequestMethod::Get),
-        host: Some(String::from("www.google.com")),
-        port: Some(443),
-        timeout: Some(10000),
-        payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
-        options: None
-    };
+    dotenv().ok(); // Add the dotenv environment variables to env::vars
+    let mut config = ReqConfig::new()
+      .global_defaults()
+      .environment_defaults(); // Environment must be after so it overrides global.
+
     let req = Req::new_from_cfg(config).unwrap();
+    let result = req.run();
+    if result.is_err() {
+        print_error_message(result.err());
+    } else {
+        handle_result(result.unwrap());
+    }
+}
+
+fn handle_result(res: ReqCommandResult) {
+
+}
+
+fn print_error_message(e: Option<ReqError>)
+{
+    if e.is_none() {
+        println!("An unknown error occurred.");
+    } else {
+        let e = e.unwrap();
+        println!("An error occurred:\n{}", &e.description);
+        process::exit(e.exit_code.value() as i32);
+    }
 }

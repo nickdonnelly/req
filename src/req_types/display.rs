@@ -2,8 +2,6 @@ use std::fmt::{self, Display, Error, Formatter};
 use super::*;
 use std::str;
 
-// TODO : Add header types and internal types for ReqResponse.
-
 impl FailureCode {
     pub fn value(&self) -> u16 {
         match *self {
@@ -50,5 +48,12 @@ impl Display for RequestMethod {
             &RequestMethod::Connect => write!(f, "CONNECT"),
             &RequestMethod::Trace   => write!(f, "TRACE")
         }
+    }
+}
+
+impl Display for ReqHeader {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result 
+    {
+        write!(f, "{}: {}", &self.name, &self.value)
     }
 }

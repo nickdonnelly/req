@@ -1,4 +1,5 @@
 use hyper::Method;
+use hyper::header::HeaderView;
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 use hyper::{ Body, Client };
@@ -11,6 +12,8 @@ use std::result;
 use std::str::FromStr;
 
 mod display;
+pub mod req;
+pub use self::req::*;
 
 type Result<T> = result::Result<T, ReqError>;
 
@@ -39,20 +42,22 @@ pub struct ReqError {
 }
 
 /// Generic response type
-// TODO: add headers and other bits here.
+// TODO: add other bits here.
 pub struct ReqResponse {
     pub body: Vec<u8>,
+    pub headers: Vec<ReqHeader>
+}
+
+#[derive(PartialEq, Debug)]
+pub struct ReqHeader {
+    pub name: String,
+    pub value: String
 }
 
 #[derive(PartialEq, Debug)]
 pub enum ReqOption {
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
     CUSTOM_ENV_FILE(CustomEnvFileInfo) // filepath
-}
-
-/// Master struct for the actual requesting
-pub struct Req {
-    cfg: ReqConfig,
 }
 
 /// The trait that represents a resource of req.
@@ -164,6 +169,16 @@ pub struct ReqCommandResult {
     pub response: Option<ReqResponse>,
 }
 
+impl ReqHeader {
+    pub fn from_header_view(hv: &HeaderView) -> ReqHeader
+    {
+        ReqHeader {
+            name: String::from(hv.name()),
+            value: hv.value_string()
+        }
+    }
+}
+
 impl ReqCommandResult {
     /// Get an empty ReqCommandResult
     pub fn new_stub() -> ReqCommandResult {
@@ -182,122 +197,15 @@ impl ReqCommandResult {
     }
 }
 
-/// Fetch a new Req client for a given config.
-impl Req {
-    /// Get a new Req instance from a config.
-    pub fn new_from_cfg(cfg: ReqConfig) 
-        -> Result<Req> {
-      
-        Ok(Req{
-            cfg: cfg,
-        })
-    }
-
-    pub fn get_config(&self) -> &ReqConfig {
-        return &self.cfg;
-    }
-
-
-    /// Runs the current config. Can only be safely run once with each
-    /// config.
-    pub fn run(&self) -> Result<ReqCommandResult> {
-        use ReqCommand::*;
-        let res = match self.cfg.command {
-            Request(_) => self.run_request(),
-            Show(_) => self.run_show(),
-            CleanEnvironment => self.clean_env(),
-        };
-        if res.is_err() {
-            return Err(res.err().unwrap());
-        }
-
-        let res = self.handle_result(res.unwrap());
-
-        if res.is_ok() {
-            Ok(res.unwrap())
-        } else {
-            Err(res.err().unwrap())
-        }
-
-    }
-
-    /// Handles based on command type and options.
-    // TODO: Consider moving this to impl ReqCommandResult
-    fn handle_result(&self, 
-        /* mut */res: ReqCommandResult) 
-        -> Result<ReqCommandResult>
+impl ReqResponse {
+    pub fn new(headers: Vec<ReqHeader>, body: Vec<u8>) -> ReqResponse
     {
-        Ok(res)
-    }
-
-    fn clean_env(&self) -> Result<ReqCommandResult> {
-        Ok(ReqCommandResult::new_stub())
-    }
-
-    fn run_show(&self) -> Result<ReqCommandResult> {
-        Ok(ReqCommandResult::new_stub())
-    }
-
-    fn run_request(&self) -> Result<ReqCommandResult> {
-        use hyper::{ Request, Uri };
-        use futures::Future;
-
-        let err: Option<ReqError> = self.validate_config_request();
-        if err.is_some() {
-            return Err(err.unwrap());
+        ReqResponse {
+            headers: headers,
+            body: body,
         }
-
-        let host_str = self.cfg.host.clone().unwrap();
-        let meth = self.cfg.command.as_method().unwrap();
-        let uri = Uri::from_str(host_str.as_str()).unwrap();
-
-        let mut core = Core::new();
-        if core.is_err() {
-            return Err(ReqError { 
-                exit_code: FailureCode::IOError, 
-                description: "Unable to fetch event loop."});
-        }
- 
-        let request = Request::new(meth, uri); 
-        let mut core = core.unwrap();
-        let handle = core.handle();
-        let client = Client::configure()
-            .connector(HttpsConnector::new(4, &handle).unwrap())
-            .build(&handle);
- 
-        let work = client.request(request).map(|res| {
-            let body = res.body().collect().wait();
-            if body.is_err() {
-                return Err(ReqError {
-                    exit_code: FailureCode::IOError,
-                    description: "Error reading body."
-                });
-            }
-
-            let body = body.unwrap();
-            body.iter().for_each(|chunk| {
-                io::stdout()
-                  .write_all(&chunk);
-            });
-            Ok(ReqCommandResult::new_stub())
-        });
-        let core_result = core.run(work);
-
-        Ok(ReqCommandResult::new_stub())
-    }
-
-    /// Checks URI, port number, etc. for validity.
-    // TODO
-    fn validate_config_request(&self) -> Option<ReqError>{
-        if self.cfg.host.is_none() {
-            return Some(
-                ReqError{ exit_code: FailureCode::ClientError, description: "No remote host given." }
-            );
-        }
-        None
     }
 }
-
 
 #[cfg(test)]
 mod tests {
