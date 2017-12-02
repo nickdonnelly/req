@@ -212,17 +212,28 @@ mod tests {
     use super::*;
     use std::str::FromStr;
 
-    // TODO: This test should be removed and replaced by an integration test.
     #[test]
     fn test_request_working() {
-        let config = ReqConfig {
-            command: ReqCommand::Request(RequestMethod::Get),
-            host: Some(String::from("https://www.google.com")),
-            port: Some(443),
-            timeout: Some(10000),
-            payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
-            options: None
-        };
+        let pl = Payload::new(vec![1,2,3], "application/octet-stream");
+        let config = ReqConfig::new()
+            .command(ReqCommand::Request(RequestMethod::Get))
+            .host_str("https://google.com")
+            .port(443)
+            .timeout(10000)
+            .payload(pl);
+        let req = Req::new_from_cfg(config).unwrap();
+        req.run().unwrap();
+    }
+
+    #[test]
+    fn test_head_request_terminates() {
+        let pl = Payload::new(vec![1,2,3], "application/octet-stream");
+        let config = ReqConfig::new()
+            .command(ReqCommand::Request(RequestMethod::Get))
+            .host_str("https://google.com")
+            .port(443)
+            .timeout(10000)
+            .payload(pl);
         let req = Req::new_from_cfg(config).unwrap();
         req.run().unwrap();
     }

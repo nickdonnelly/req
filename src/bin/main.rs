@@ -1,14 +1,19 @@
 extern crate reqlib;
 extern crate dotenv;
+extern crate clap;
 use reqlib::*;
 use dotenv::dotenv;
 use std::process;
+
+mod utils;
 
 fn main() {
     dotenv().ok(); // Add the dotenv environment variables to env::vars
     let mut config = ReqConfig::new()
       .global_defaults()
       .environment_defaults(); // Environment must be after so it overrides global.
+    
+    utils::process_arguments(&mut config);
 
     let req = Req::new_from_cfg(config).unwrap();
     let result = req.run();

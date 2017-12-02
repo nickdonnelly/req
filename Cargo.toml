@@ -9,6 +9,7 @@ hyper-tls = "0.1.2"
 tokio-core = "0.1.10"
 dotenv = "0.10.1"
 futures = "0.1"
+clap = "2"
 
 [lib]
 name = "reqlib"
