@@ -13,7 +13,7 @@ fn main() {
       .global_defaults()
       .environment_defaults(); // Environment must be after so it overrides global.
     
-    utils::process_arguments(&mut config);
+    config = utils::process_arguments(config);
 
     let req = Req::new_from_cfg(config).unwrap();
     let result = req.run();

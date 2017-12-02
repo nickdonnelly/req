@@ -81,15 +81,15 @@ pub enum RequestMethod {
 impl RequestMethod {
     pub fn as_hyper_method(&self) -> Method {
         match self {
-            Get     => Method::Get,
-            Head    => Method::Head,
-            Put     => Method::Put,
-            Post    => Method::Post,
-            Delete  => Method::Delete,
-            Options => Method::Options,
-            Patch   => Method::Patch,
-            Connect => Method::Connect,
-            Trace   => Method::Trace,
+            &RequestMethod::Get     => Method::Get,
+            &RequestMethod::Head    => Method::Head,
+            &RequestMethod::Put     => Method::Put,
+            &RequestMethod::Post    => Method::Post,
+            &RequestMethod::Delete  => Method::Delete,
+            &RequestMethod::Options => Method::Options,
+            &RequestMethod::Patch   => Method::Patch,
+            &RequestMethod::Connect => Method::Connect,
+            &RequestMethod::Trace   => Method::Trace,
         }
     }
 }
