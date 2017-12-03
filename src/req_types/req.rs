@@ -1,3 +1,4 @@
+use hyper::client::Request;
 use super::*;
 use std::time::Duration;
 use std::ops::Deref;
@@ -9,6 +10,7 @@ pub struct Req {
 
 /// Fetch a new Req client for a given config.
 impl Req {
+
     /// Get a new Req instance from a config.
     pub fn new_from_cfg(cfg: ReqConfig) 
         -> Result<Req> {
@@ -60,7 +62,18 @@ impl Req {
         let meth = self.cfg.command.as_method().unwrap();
         let timeout = self.cfg.timeout.clone();
         let uri = Uri::from_str(host_str.as_str()).unwrap();
+        let mut options: Vec<&ReqOption> = self.cfg.options.iter().collect();
+        let mut custom_headers: Vec<(String, String)> = Vec::new();
 
+
+        options.iter().for_each(|option| {
+            match option {
+                &&ReqOption::CUSTOM_HEADER(ref v) => custom_headers.push(v.clone()),
+                _ => {}
+            };
+        });
+
+        
         let mut core = Core::new();
         if core.is_err() {
             return Err(ReqError { 
@@ -68,7 +81,9 @@ impl Req {
                 description: "Unable to fetch event loop."});
         }
  
-        let request = Request::new(meth, uri); 
+        let mut request = Request::new(meth, uri); 
+        Req::add_request_headers(&mut request, &mut custom_headers);
+        
         let mut core = core.unwrap();
         let handle = core.handle();
         let client = Client::configure()
@@ -104,6 +119,13 @@ impl Req {
         let core_result = core.run(work);
 
         Ok(ReqCommandResult::new_stub())
+    }
+
+    fn add_request_headers(req: &mut Request, headers: &mut Vec<(String, String)>)
+    {
+        headers.iter().for_each(|header|{
+            req.headers_mut().set_raw(header.0.clone(), header.1.clone());
+        });
     }
 
     /// Checks URI, port number, etc. for validity.

@@ -1,5 +1,5 @@
-use reqlib::{ReqConfig, RequestMethod, ReqCommand};
-use clap::{Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand};
+use reqlib::{ReqConfig, RequestMethod, ReqCommand, ReqOption};
+use clap::{Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand, Values};
 use std::str::FromStr;
 
 /// Modifies the given config with all options given by in the given Args.
@@ -34,6 +34,9 @@ fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfi
         cfg
     };
 
+    // Add any headers
+    let cfg = extract_headers(request_matches.values_of("header"), cfg);
+
     // Add the URI
     if let Some(uri) = request_matches.value_of("uri") {
         cfg.host_str(uri)
@@ -45,6 +48,24 @@ fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfi
 fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
     cfg
+}
+
+fn extract_headers<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfig {
+    if headers.is_some() {
+        let mut header_options: Vec<ReqOption> = Vec::new();
+
+        let values: Vec<&str> = headers.unwrap().collect();
+        for (i, val) in values.iter().enumerate() {
+            if i % 2 == 0 {
+                header_options.push(
+                  ReqOption::CUSTOM_HEADER((String::from(values[i]), String::from(values[i+1]))));
+            }
+        }
+
+        cfg.options(header_options)
+    } else {
+        cfg
+    }
 }
 
 fn build_matches<'a>() -> ArgMatches<'a>
@@ -81,11 +102,24 @@ fn build_matches<'a>() -> ArgMatches<'a>
 fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>> 
 {
     let mut result: Vec<Arg<'a, 'b>> = Vec::new();
-    result.push(print_arg());
     result.push(uri_arg());
     result.push(payload_arg());
+    result.push(header_flag());
+    result.push(print_flag());
 
     result
+}
+
+fn header_flag<'a, 'b>() -> Arg<'a, 'b>
+{
+    Arg::with_name("header")
+        .help("Specify a custom header. Use the format \"Header Name\" \"Value\"")
+        .short("h")
+        .long("header")
+        .multiple(true)
+        .number_of_values(2)
+        .takes_value(true)
+        .value_name("HEADER")
 }
 
 fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
@@ -99,7 +133,7 @@ fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
         .value_name("PAYLOAD_FILE")
 }
 
-fn print_arg<'a, 'b>() -> Arg<'a, 'b> 
+fn print_flag<'a, 'b>() -> Arg<'a, 'b> 
 {
     Arg::with_name("print")
         .help("Explicitly decide which parts of the response to print.")

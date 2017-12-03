@@ -21,7 +21,7 @@ impl ReqConfig {
             port: None,
             timeout: None,
             payload: None,
-            options: None
+            options: Vec::new()
         }
     }
 
@@ -77,26 +77,16 @@ impl ReqConfig {
     /// the provided option on top of any previous ones. Duplicates
     /// will not be added.
     pub fn option(mut self, opt: ReqOption) -> ReqConfig {
-        if self.options.is_none() {
-            let opts = vec![opt];
-            self.options = Some(opts);
-            self
-        } else {
-            let mut old_opts = self.options.unwrap();
-            let mut new_opts = Vec::<ReqOption>::new();
-            new_opts.append(&mut old_opts);
-            if !old_opts.contains(&opt) {
-                new_opts.push(opt);
-            }
-            self.options = Some(new_opts);
-            self
+        if !self.options.contains(&opt) {
+            self.options.push(opt);
         }
+        self
     }
 
     /// Consumes the given config and produces one that contains
     /// the provided options. Does not preserve old options. 
-    pub fn options(mut self, opts: Vec<ReqOption>) -> ReqConfig {
-        self.options = Some(opts);
+    pub fn options(mut self, mut opts: Vec<ReqOption>) -> ReqConfig {
+        self.options.append(&mut opts);
         self
     }
 

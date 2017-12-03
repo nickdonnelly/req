@@ -56,6 +56,7 @@ pub struct ReqHeader {
 
 #[derive(PartialEq, Debug)]
 pub enum ReqOption {
+    CUSTOM_HEADER((String, String)), 
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
     CUSTOM_ENV_FILE(CustomEnvFileInfo) // filepath
 }
@@ -161,7 +162,7 @@ pub struct ReqConfig {
     pub port: Option<usize>,
     pub timeout: Option<usize>,
     pub payload: Option<Payload>,
-    pub options: Option<Vec<ReqOption>>,
+    pub options: Vec<ReqOption>,
 }
 
 pub struct ReqCommandResult {
