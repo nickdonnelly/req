@@ -107,21 +107,22 @@ impl Req {
 
             let body = body.unwrap();
             body.iter().for_each(|chunk| {
-                chunk.iter().for_each(|val| {
-                    write!(&mut req_body, "{}", val);
-                });
+                req_body.write_all(&chunk);
             });
 
 
             let req_res = ReqResponse::new(req_headers, req_body);
-            Ok(ReqCommandResult::new_stub())
+            Ok(ReqCommandResult::new_response(req_res))
         });
-        let core_result = core.run(work);
+        let core_result = core.run(work).unwrap().unwrap();
 
-        Ok(ReqCommandResult::new_stub())
+        // Yes, this does nothing. Has to be here to compile though :/
+        Ok(core_result)
     }
 
-    fn add_request_headers(req: &mut Request, headers: &mut Vec<(String, String)>)
+    fn add_request_headers(
+        req: &mut Request, 
+        headers: &mut Vec<(String, String)>)
     {
         headers.iter().for_each(|header|{
             req.headers_mut().set_raw(header.0.clone(), header.1.clone());

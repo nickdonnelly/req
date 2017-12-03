@@ -1,6 +1,8 @@
-use reqlib::{ReqConfig, RequestMethod, ReqCommand, ReqOption};
-use clap::{Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand, Values};
+use reqlib::{ReqConfig, RequestMethod, ReqCommand};
+use clap::{Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand};
 use std::str::FromStr;
+
+mod config_extract;
 
 /// Modifies the given config with all options given by in the given Args.
 pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
@@ -19,9 +21,6 @@ pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
         ("show", Some(show)) => setup_show_resource(show, cfg),
         _ => cfg 
     };
-
-
-    //println!("{:?}", matches.subcommand_matches("get").unwrap().value_of("uri").unwrap());
 }
 
 fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
@@ -35,7 +34,8 @@ fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfi
     };
 
     // Add any headers
-    let cfg = extract_headers(request_matches.values_of("header"), cfg);
+    let cfg = config_extract::header_flags(request_matches.values_of("header"), cfg);
+    let cfg = config_extract::print_flags(request_matches.values_of("print"), cfg);
 
     // Add the URI
     if let Some(uri) = request_matches.value_of("uri") {
@@ -45,27 +45,10 @@ fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfi
     }
 }
 
+// TODO: Move to config_extract
 fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
     cfg
-}
-
-fn extract_headers<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfig {
-    if headers.is_some() {
-        let mut header_options: Vec<ReqOption> = Vec::new();
-
-        let values: Vec<&str> = headers.unwrap().collect();
-        for (i, val) in values.iter().enumerate() {
-            if i % 2 == 0 {
-                header_options.push(
-                  ReqOption::CUSTOM_HEADER((String::from(values[i]), String::from(values[i+1]))));
-            }
-        }
-
-        cfg.options(header_options)
-    } else {
-        cfg
-    }
 }
 
 fn build_matches<'a>() -> ArgMatches<'a>
@@ -76,15 +59,26 @@ fn build_matches<'a>() -> ArgMatches<'a>
         .about("Quick, easy, configurable HTTP client.")
         .setting(AppSettings::GlobalVersion)
         .setting(AppSettings::SubcommandRequired)
-        .subcommand(SubCommand::with_name("get").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("post").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("put").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("options").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("head").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("trace").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("connect").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("delete").args(request_subcommand_args().as_slice()))
-        .subcommand(SubCommand::with_name("patch").args(request_subcommand_args().as_slice()))
+
+        .subcommand(SubCommand::with_name("get")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("post")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("put")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("options")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("head")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("trace")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("connect")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("delete")
+            .args(request_subcommand_args().as_slice()))
+        .subcommand(SubCommand::with_name("patch")
+            .args(request_subcommand_args().as_slice()))
+
         .subcommand(SubCommand::with_name("show").about("Show the specified resource.")
                     .arg(Arg::with_name("resource")
                     .help("The resource you wish to show")
@@ -140,6 +134,7 @@ fn print_flag<'a, 'b>() -> Arg<'a, 'b>
         .set(ArgSettings::CaseInsensitive)
         .short("p")
         .long("print")
+        .number_of_values(1)
         .multiple(true)
         .takes_value(true)
         .value_name("PARTIAL")

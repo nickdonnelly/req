@@ -43,6 +43,7 @@ pub struct ReqError {
 
 /// Generic response type
 // TODO: add other bits here.
+#[derive(Debug)]
 pub struct ReqResponse {
     pub body: Vec<u8>,
     pub headers: Vec<ReqHeader>
@@ -57,6 +58,7 @@ pub struct ReqHeader {
 #[derive(PartialEq, Debug)]
 pub enum ReqOption {
     CUSTOM_HEADER((String, String)), 
+    PRINT(String), // string key contains the resource to print
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
     CUSTOM_ENV_FILE(CustomEnvFileInfo) // filepath
 }
@@ -165,6 +167,7 @@ pub struct ReqConfig {
     pub options: Vec<ReqOption>,
 }
 
+#[derive(Debug)]
 pub struct ReqCommandResult {
     pub to_show: Option<String>,
     pub response: Option<ReqResponse>,
