@@ -20,11 +20,21 @@ type Result<T> = result::Result<T, ReqError>;
 // TODO
 pub const HELP_STR: &str = "Help String goes here";
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum ReqContentType {
+    Custom(String),
+    Json, Xml,
+    Png, Jpeg, Webm, Webp, Gif, Mp4, Ogg,
+    Html, Css, Javascript,
+    OctetStream, Zip,
+    Empty
+}
+
 /// The type consumed as a payload (direct bytes that will be written).
 #[derive(Debug, PartialEq)]
 pub struct Payload {
     pub data: Vec<u8>,
-    pub content_type: String // maybe use enum type
+    pub content_type: ReqContentType
 }
 
 #[derive(Debug)]

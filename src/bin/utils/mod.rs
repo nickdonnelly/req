@@ -1,6 +1,5 @@
-use reqlib::{ReqConfig, RequestMethod, ReqCommand};
+use reqlib::{ReqConfig};
 use clap::{Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand};
-use std::str::FromStr;
 
 mod config_extract;
 
@@ -10,45 +9,17 @@ pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
     let matches = build_matches();
 
     return match matches.subcommand() {
-        ("get", Some(request)) => setup_request("get", request, cfg),
-        ("post", Some(request)) => setup_request("post", request, cfg),
-        ("put", Some(request)) => setup_request("put", request, cfg),
-        ("options", Some(request)) => setup_request("options", request, cfg),
-        ("head", Some(request)) => setup_request("head", request, cfg),
-        ("trace", Some(request)) => setup_request("trace", request, cfg),
-        ("connect", Some(request)) => setup_request("connect", request, cfg),
-        ("delete", Some(request)) => setup_request("delete", request, cfg),
-        ("show", Some(show)) => setup_show_resource(show, cfg),
+        ("get", Some(request))     => config_extract::setup_request("get", request, cfg),
+        ("post", Some(request))    => config_extract::setup_request("post", request, cfg),
+        ("put", Some(request))     => config_extract::setup_request("put", request, cfg),
+        ("options", Some(request)) => config_extract::setup_request("options", request, cfg),
+        ("head", Some(request))    => config_extract::setup_request("head", request, cfg),
+        ("trace", Some(request))   => config_extract::setup_request("trace", request, cfg),
+        ("connect", Some(request)) => config_extract::setup_request("connect", request, cfg),
+        ("delete", Some(request))  => config_extract::setup_request("delete", request, cfg),
+        ("show", Some(show))       => config_extract:: setup_show_resource(show, cfg),
         _ => cfg 
     };
-}
-
-fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
-{
-    // Add the command
-    let req_method = RequestMethod::from_str(meth);
-    let cfg = if req_method.is_ok() {
-        cfg.command(ReqCommand::Request(req_method.unwrap()))
-    } else {
-        cfg
-    };
-
-    // Add any headers
-    let cfg = config_extract::header_flags(request_matches.values_of("header"), cfg);
-    let cfg = config_extract::print_flags(request_matches.values_of("print"), cfg);
-
-    // Add the URI
-    if let Some(uri) = request_matches.value_of("uri") {
-        cfg.host_str(uri)
-    } else {
-        cfg
-    }
-}
-
-// TODO: Move to config_extract
-fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
-{
-    cfg
 }
 
 fn build_matches<'a>() -> ArgMatches<'a>
@@ -124,6 +95,7 @@ fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
         .short("b")
         .long("body")
         .takes_value(true)
+        .number_of_values(1)
         .value_name("PAYLOAD_FILE")
 }
 

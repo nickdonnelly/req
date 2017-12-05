@@ -1,6 +1,34 @@
-use reqlib::{ReqConfig, ReqOption};
-use clap::{Values};
+use reqlib::{ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload};
+use clap::{Values, ArgMatches};
+use std::str::FromStr;
 
+pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
+{
+    cfg
+}
+
+pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
+{
+    // Add the command
+    let req_method = RequestMethod::from_str(meth);
+    let cfg = if req_method.is_ok() {
+        cfg.command(ReqCommand::Request(req_method.unwrap()))
+    } else {
+        cfg
+    };
+
+    // Add any headers
+    let cfg = header_flags(request_matches.values_of("header"), cfg);
+    let cfg = print_flags(request_matches.values_of("print"), cfg);
+    let cfg = payload_arg(request_matches.value_of("payload"), cfg);
+
+    // Add the URI
+    if let Some(uri) = request_matches.value_of("uri") {
+        cfg.host_str(uri)
+    } else {
+        cfg
+    }
+}
 
 pub fn print_flags<'a>(print_flags: Option<Values<'a>>, cfg: ReqConfig)
     -> ReqConfig
@@ -9,11 +37,34 @@ pub fn print_flags<'a>(print_flags: Option<Values<'a>>, cfg: ReqConfig)
         let mut print_options: Vec<ReqOption> = Vec::new();
         let values: Vec<&str> = print_flags.unwrap().collect();
 
-        for (i, v) in values.iter().enumerate() {
+        for (_, v) in values.iter().enumerate() {
             print_options.push(ReqOption::PRINT(String::from(*v)));
         }
 
         cfg.options(print_options)
+    } else {
+        cfg
+    }
+}
+
+/// NOTE: This function *can* fail if the filename provided was not found.
+/// In such a case, it will exit gracefully with an error message.
+pub fn payload_arg<'a>(payload_arg: Option<&'a str>, cfg: ReqConfig) 
+    -> ReqConfig 
+{
+    use std::fs;
+    use std::process;
+    use reqlib::FailureCode;
+
+    if payload_arg.is_some() {
+        let filename = payload_arg.unwrap();
+        let payload = Payload::from_file(filename.clone());
+        if payload.is_err() {
+            println!("Could not open {}", filename);
+            process::exit(FailureCode::IOError.value() as i32);
+        } else {
+            cfg.payload(payload.unwrap())
+        }
     } else {
         cfg
     }

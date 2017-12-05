@@ -5,7 +5,6 @@ use reqlib::*;
 use dotenv::dotenv;
 use std::str;
 use std::process;
-use std::io::{self, Write};
 
 mod utils;
 
@@ -71,17 +70,15 @@ fn print_body(body: &Vec<u8>)
         Err(e) => panic!("Invalid UTF-8 in response! Aborting print:\n{}", e)
     };
 
-    println!("Body:");
     println!("{}", body_s);
 }
 
 fn print_headers(headers: &Vec<ReqHeader>)
 {
-    println!("Headers:");
     for header in headers {
         println!("{}", header);
     }
-    println!("");
+    println!("---");
 }
 
 fn print_error_message(e: Option<ReqError>)

@@ -4,6 +4,7 @@ use std::str::FromStr;
 use std::fmt;
 use std::fmt::{ Formatter, Display };
 use std::result;
+use std::io::Error;
 
 impl Display for ReqError {
     fn fmt(&self, f: &mut Formatter) ->
@@ -135,12 +136,138 @@ impl ReqConfig {
     }
 }
 
+
+impl Clone for Payload {
+    fn clone(&self) -> Payload
+    {
+        Payload {
+            data: self.data.to_vec(),
+            content_type: self.content_type.clone()
+        }
+    }
+}
+
 impl Payload {
-    pub fn new(data: Vec<u8>, content_type: &str) -> Payload {
+    pub fn empty() -> Payload
+    {
+        Payload {
+            data: Vec::new(),
+            content_type: ReqContentType::Empty
+        }
+    }
+
+    pub fn new(data: Vec<u8>, content_type: &str) -> Payload 
+    {
         Payload {
             data: data,
-            content_type: String::from(content_type)
+            content_type: ReqContentType::Custom(String::from(content_type))
         }
+    }
+
+    pub fn from_file(filename: &str) -> Result<Payload, Error>
+    {
+        use std::fs::File;
+        use std::path::Path;
+        use std::io::Read;
+
+        let file_ext = Path::new(filename.clone()).extension();
+        let ctt = if file_ext.is_some() {
+            let os_ext = file_ext.unwrap().to_str(); 
+            if os_ext.is_none() {
+                ReqContentType::OctetStream
+            } else {
+                ReqContentType::from_extension(os_ext.unwrap())
+            }
+        } else { 
+            ReqContentType::OctetStream
+        };
+
+        let try_file = File::open(String::from(filename));
+
+        if try_file.is_ok() {
+            let mut file = try_file.unwrap();
+            let mut buf: Vec<u8> = Vec::new();
+
+            file.read_to_end(&mut buf);
+            
+            Ok(Payload {
+                data: buf,
+                content_type: ctt
+            })
+        } else {
+            Err(try_file.err().unwrap())
+        }
+
+    }
+
+    pub fn content_type(&self) -> &ReqContentType
+    {
+        &self.content_type
+    }
+
+    pub fn content_type_str(&self) -> &str {
+        self.content_type.as_str()
+    }
+
+    pub fn data(self) -> Vec<u8> 
+    {
+        self.data
+    }
+    
+    pub fn data_ref(&self) -> &Vec<u8> {
+        &self.data
+    }
+}
+
+impl ReqContentType {
+   pub fn from_extension(ext: &str) -> ReqContentType
+   {
+       ReqContentType::from_str(ext.trim_left_matches('.')).unwrap()
+   }
+
+   pub fn as_str(&self) -> &str {
+      match *self {
+          ReqContentType::Json => "application/json",
+          ReqContentType::Xml  => "application/xml",
+          ReqContentType::Png => "image/png",
+          ReqContentType::Jpeg => "image/jpeg",
+          ReqContentType::Webm => "video/webm",
+          ReqContentType::Webp => "image/webp",
+          ReqContentType::Gif => "image/gif",
+          ReqContentType::Mp4 => "video/mpeg",
+          ReqContentType::Ogg => "audio/ogg",
+          ReqContentType::Html => "application/html",
+          ReqContentType::Css => "application/css",
+          ReqContentType::Javascript => "application/javascript",
+          ReqContentType::Zip => "application/zip",
+          ReqContentType::OctetStream | _ => "application/octet-stream",
+          ReqContentType::Custom(ref v) => v.as_str(),
+      }
+   }
+}
+
+impl FromStr for ReqContentType {
+    type Err = (); // We will never error out (default to application/octet-stream)
+
+    /// INTERNAL USE ONLY! This does NOT convert a type e.g. application/javascript to this type!
+    fn from_str(s: &str) -> Result<Self, Self::Err>
+    {
+        Ok(match s.to_lowercase().as_str() {
+            "json" => ReqContentType::Json,
+            "xml" => ReqContentType::Xml,
+            "png" => ReqContentType::Png,
+            "jpg" | "jpeg" => ReqContentType::Jpeg,
+            "webm" => ReqContentType::Webm,
+            "webp" => ReqContentType::Webp,
+            "gif" => ReqContentType::Gif,
+            "mp4" => ReqContentType::Mp4,
+            "ogg" => ReqContentType::Ogg,
+            "html" => ReqContentType::Html,
+            "css" => ReqContentType::Css,
+            "js" => ReqContentType::Javascript,
+            "zip" => ReqContentType::Zip,
+            _ => ReqContentType::OctetStream,
+        })
     }
 }
 

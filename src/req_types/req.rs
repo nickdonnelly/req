@@ -61,9 +61,16 @@ impl Req {
         let host_str = self.cfg.host.clone().unwrap();
         let meth = self.cfg.command.as_method().unwrap();
         let timeout = self.cfg.timeout.clone();
+        let payload = self.cfg.payload.clone();
         let uri = Uri::from_str(host_str.as_str()).unwrap();
         let mut options: Vec<&ReqOption> = self.cfg.options.iter().collect();
         let mut custom_headers: Vec<(String, String)> = Vec::new();
+
+        let payload = if payload.is_some() {
+            payload.unwrap()
+        } else {
+            Payload::empty()
+        };
 
 
         options.iter().for_each(|option| {
@@ -82,6 +89,7 @@ impl Req {
         }
  
         let mut request = Request::new(meth, uri); 
+        Req::add_payload(&mut request, payload);
         Req::add_request_headers(&mut request, &mut custom_headers);
         
         let mut core = core.unwrap();
@@ -118,6 +126,20 @@ impl Req {
 
         // Yes, this does nothing. Has to be here to compile though :/
         Ok(core_result)
+    }
+
+    fn add_payload(
+        req: &mut Request,
+        payload: Payload)
+    {
+        let ctt = payload.content_type().clone();
+        if let ReqContentType::Empty = ctt {
+            return;
+        }
+
+        req.headers_mut().set_raw("Content-Type", payload.content_type_str());
+        let data = payload.data();
+        req.set_body(data);
     }
 
     fn add_request_headers(
