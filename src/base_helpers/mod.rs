@@ -156,6 +156,14 @@ impl Payload {
         }
     }
 
+    pub fn new_typed(data: Vec<u8>, content_type: ReqContentType) -> Payload 
+    {
+        Payload {
+            data: data,
+            content_type: content_type
+        }
+    }
+
     pub fn new(data: Vec<u8>, content_type: &str) -> Payload 
     {
         Payload {
@@ -273,15 +281,15 @@ impl FromStr for ReqContentType {
 
 #[cfg(test)]
 mod tests {
-    use super::{Payload, Req, ReqConfig, ReqCommand, RequestMethod};
+    use super::{Payload, Req, ReqConfig, ReqCommand, ReqContentType, RequestMethod};
     fn configuration_optionless() -> ReqConfig {
         ReqConfig {
             command: ReqCommand::Request(RequestMethod::Get),
             host: Some(String::from("https://www.google.com")),
             port: Some(443),
             timeout: Some(10000),
-            payload: Some(Payload { data: vec![1,2,3], content_type: String::from("application/octet-stream") }),
-            options: None
+            payload: Some(Payload { data: vec![1,2,3], content_type: ReqContentType::OctetStream }),
+            options: Vec::new()
         }
     }
 
@@ -289,7 +297,7 @@ mod tests {
     fn new_client_configures_correctly() {
         let config = configuration_optionless();
 
-        let pl = Payload::new(vec![1,2,3], "application/octet-stream");
+        let pl = Payload::new_typed(vec![1,2,3], ReqContentType::OctetStream);
 
         let mut built_config = ReqConfig::new()
             .command(ReqCommand::Request(RequestMethod::Get))
