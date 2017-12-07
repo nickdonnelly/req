@@ -49,6 +49,7 @@ impl Req {
         Ok(ReqCommandResult::new_stub())
     }
 
+    #[inline]
     fn run_request(&self) -> Result<ReqCommandResult> {
         use hyper::{ Request, Uri };
         use futures::Future;
@@ -89,8 +90,11 @@ impl Req {
         }
  
         let mut request = Request::new(meth, uri); 
+        let mut request_headers: Vec<ReqHeader> = Vec::new();
+
         Req::add_payload(&mut request, payload);
         Req::add_request_headers(&mut request, &mut custom_headers);
+        Req::copy_request_headers(&mut request, &mut request_headers);
         
         let mut core = core.unwrap();
         let handle = core.handle();
@@ -119,7 +123,7 @@ impl Req {
             });
 
 
-            let req_res = ReqResponse::new(req_headers, req_body);
+            let req_res = ReqResponse::new(req_headers, req_body, request_headers);
             Ok(ReqCommandResult::new_response(req_res))
         });
         let core_result = core.run(work).unwrap().unwrap();
@@ -142,6 +146,27 @@ impl Req {
         req.set_body(data);
     }
 
+    /// Converts and copies all of the headers from the request to the given vector.
+    /// Used to return the headers from the request with the `ReqCommandResult`.
+    fn copy_request_headers(
+        req: &mut Request,
+        copy_to: &mut Vec<ReqHeader>)
+    {
+        req.headers().iter().for_each(|header|{
+            let name = String::from(header.name());
+            let value = header.value_string();
+            let r_header = ReqHeader{
+                name: name,
+                value: value
+            };
+
+            copy_to.push(r_header);
+        });
+
+    }
+
+
+    /// Adds all headers in `headers` to the request.
     fn add_request_headers(
         req: &mut Request, 
         headers: &mut Vec<(String, String)>)

@@ -148,6 +148,7 @@ impl Clone for Payload {
 }
 
 impl Payload {
+    /// Generate an empty `Payload` with `ReqContentType::Empty`
     pub fn empty() -> Payload
     {
         Payload {
@@ -156,6 +157,7 @@ impl Payload {
         }
     }
 
+    /// Generate a `Payload` with the given data and content type
     pub fn new_typed(data: Vec<u8>, content_type: ReqContentType) -> Payload 
     {
         Payload {
@@ -164,6 +166,8 @@ impl Payload {
         }
     }
 
+    /// Generate a `Payload` with given data and content type string (of the form
+    /// "application/octet-stream", "image/png", etc.
     pub fn new(data: Vec<u8>, content_type: &str) -> Payload 
     {
         Payload {
@@ -172,6 +176,9 @@ impl Payload {
         }
     }
 
+    /// Generate a new `Payload` from a file. This operation may fail. Content type
+    /// is automatically determined by file extension, or is automatically set to 
+    /// application/octet-stream if the MIME type is unknown.
     pub fn from_file(filename: &str) -> Result<Payload, Error>
     {
         use std::fs::File;
@@ -208,26 +215,35 @@ impl Payload {
 
     }
 
+    /// Get the content type as a reference
     pub fn content_type(&self) -> &ReqContentType
     {
         &self.content_type
     }
 
+    /// Get the content type as a str reference (as it will be printed in headers).
     pub fn content_type_str(&self) -> &str {
         self.content_type.as_str()
     }
 
+    /// Consume the payload and retrieve its data.
     pub fn data(self) -> Vec<u8> 
     {
         self.data
     }
     
+    /// Get a reference to the data inside the payload.
     pub fn data_ref(&self) -> &Vec<u8> {
         &self.data
     }
 }
 
 impl ReqContentType {
+   /// Convert file extension (with or without ".") to a ReqContentType.
+   /// #Examples 
+   /// ```
+   /// assert_eq!(ReqContentType::Html, ReqContentType::from_str(".html"));
+   /// ```
    pub fn from_extension(ext: &str) -> ReqContentType
    {
        ReqContentType::from_str(ext.trim_left_matches('.')).unwrap()

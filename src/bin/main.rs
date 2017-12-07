@@ -45,13 +45,14 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>) {
         let response = res.response.unwrap();
 
         if print_flags.len() == 0 {
-            print_headers(&response.headers);
+            print_headers(&response.headers, "Response Headers:");
             print_body(&response.body);
         } else {
             print_flags.iter().for_each(|flag| {
                 if let &ReqOption::PRINT(ref v) = flag {
                     match v.to_lowercase().as_str() {
-                        "headers" => print_headers(&response.headers),
+                        "headers" => print_headers(&response.headers, "Response Headers:"),
+                        "request-headers" => print_headers(&response.request_headers, "Request Headers:"),
                         "body" => print_body(&response.body),
                         _ => {}
                     }
@@ -73,8 +74,9 @@ fn print_body(body: &Vec<u8>)
     println!("{}", body_s);
 }
 
-fn print_headers(headers: &Vec<ReqHeader>)
+fn print_headers(headers: &Vec<ReqHeader>, title: &str)
 {
+    println!("{}", title);
     for header in headers {
         println!("{}", header);
     }

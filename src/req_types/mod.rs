@@ -56,6 +56,7 @@ pub struct ReqError {
 #[derive(Debug)]
 pub struct ReqResponse {
     pub body: Vec<u8>,
+    pub request_headers: Vec<ReqHeader>,
     pub headers: Vec<ReqHeader>
 }
 
@@ -212,10 +213,15 @@ impl ReqCommandResult {
 }
 
 impl ReqResponse {
-    pub fn new(headers: Vec<ReqHeader>, body: Vec<u8>) -> ReqResponse
+    pub fn new(
+        headers: Vec<ReqHeader>, 
+        body: Vec<u8>, 
+        request_headers: Vec<ReqHeader>) 
+        -> ReqResponse
     {
         ReqResponse {
             headers: headers,
+            request_headers: request_headers,
             body: body,
         }
     }
