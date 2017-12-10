@@ -7,7 +7,8 @@ impl FailureCode {
         match *self {
             FailureCode::NoError     => 0,
             FailureCode::ClientError => 1,
-            FailureCode::IOError     => 2
+            FailureCode::IOError     => 2,
+            FailureCode::Timeout     => 3
         }
     }
 }

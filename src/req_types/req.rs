@@ -1,7 +1,9 @@
 use hyper::client::Request;
+use hyper::error;
 use super::*;
 use std::time::Duration;
 use std::ops::Deref;
+use std::error::Error;
 
 /// Master struct for the actual requesting
 pub struct Req {
@@ -126,10 +128,64 @@ impl Req {
             let req_res = ReqResponse::new(req_headers, req_body, request_headers);
             Ok(ReqCommandResult::new_response(req_res))
         });
-        let core_result = core.run(work).unwrap().unwrap();
+        let core_result = core.run(work);
+        if core_result.is_err() {
+            return Err(Req::match_hyper_error(core_result.err()));
+        }
 
-        // Yes, this does nothing. Has to be here to compile though :/
+        let core_result = core_result.unwrap().unwrap();
+
         Ok(core_result)
+    }
+
+    fn match_hyper_error(err: Option<error::Error>) -> ReqError
+    {
+        use self::error::Error;
+        use std::io::ErrorKind;
+
+        if err.is_none() {
+            ReqError {
+                exit_code: FailureCode::ClientError,
+                description: "Silent failure! No error returned!"
+            }
+        } else {
+            match err.unwrap() {
+              Error::Header => ReqError { 
+                  exit_code: FailureCode::IOError, 
+                  description: "Invalid header." 
+              },
+              Error::Io(e) => {
+                  //let erstr = format!("{}", e.description());
+                  let estr =  match e.kind() {
+                      ErrorKind::ConnectionRefused => "Connection refused.",
+                      ErrorKind::ConnectionReset => "Connection reset.",
+                      ErrorKind::ConnectionAborted => "Connection aborted.",
+                      ErrorKind::NotConnected => "Connection failed.",
+                      ErrorKind::TimedOut => "IO timed out.",
+                      ErrorKind::PermissionDenied => "Permission denied.",
+                      ErrorKind::Interrupted => "Interrupted.",
+                      _ => "Unknown error."
+                  };
+                  ReqError { 
+                      exit_code: FailureCode::IOError, 
+                      description: estr
+                  }
+              },
+              Error::Timeout => {
+                  ReqError {
+                      exit_code: FailureCode::Timeout,
+                      description: "Connection timed out."
+                  }
+              },
+              Error::Status => {
+                  ReqError {
+                      exit_code: FailureCode::IOError,
+                      description: "Bad HTTP status."
+                  }
+              },
+              _ => ReqError { exit_code: FailureCode::ClientError, description: "Unknown error." }
+            }
+        }
     }
 
     fn add_payload(

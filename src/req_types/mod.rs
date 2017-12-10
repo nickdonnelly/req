@@ -41,7 +41,8 @@ pub struct Payload {
 pub enum FailureCode {
     NoError,
     ClientError,
-    IOError
+    IOError,
+    Timeout
 }
 
 /// Generic error type. Exit code may be ignored if it is zero.

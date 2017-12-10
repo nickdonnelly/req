@@ -10,6 +10,8 @@ tokio-core = "0.1.10"
 dotenv = "0.10.1"
 futures = "0.1"
 clap = "2"
+stopwatch = "0.0.7"
+colored = "1.6"
 
 [lib]
 name = "reqlib"
