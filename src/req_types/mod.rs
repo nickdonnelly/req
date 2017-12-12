@@ -50,7 +50,7 @@ pub struct ReqError {
 }
 
 /// Describes the type of a response status.
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum ReqStatusType {
     Success,
     Redirect,
@@ -66,6 +66,23 @@ pub struct ReqResponseStatus {
     status_int: u16,
     status_string: String,
     status_type: ReqStatusType
+}
+
+impl ReqResponseStatus {
+
+  pub fn status_type(&self) -> ReqStatusType {
+      self.status_type.clone()
+  }
+
+  pub fn as_string(&self) -> String 
+  {
+      String::from(self.status_string.as_str())
+  }
+
+  pub fn as_int(&self) -> u16 
+  {
+      self.status_int
+  }
 }
 
 impl From<hyper::StatusCode> for ReqResponseStatus {

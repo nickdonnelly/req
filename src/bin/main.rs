@@ -57,12 +57,14 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_mil
 
         if print_flags.len() == 0 {
             print_response_time(elapsed_millis);
+            print_response_status(&response.status);
             print_headers(&response.headers, "Response Headers:");
             print_body(&response.body);
         } else {
             print_flags.iter().for_each(|flag| {
                 if let &ReqOption::PRINT(ref v) = flag {
                     match v.to_lowercase().as_str() {
+                        "status" => print_response_status(&response.status),
                         "response-time" => print_response_time(elapsed_millis),
                         "headers" => print_headers(&response.headers, "Response Headers:"),
                         "request-headers" => print_headers(&response.request_headers, "Request Headers:"),
@@ -75,6 +77,18 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_mil
     } else {
         println!("Result was unexpected: {:?}", res);
     }
+}
+
+fn print_response_status(status: &ReqResponseStatus)
+{
+    match status.status_type() {
+        ReqStatusType::Success => println!("Server responded with {}.", status.as_string().green()),
+        ReqStatusType::Redirect => println!("Server responded with {}.", status.as_string().magenta()),
+        ReqStatusType::Information => println!("Server responded with {}.", status.as_string().cyan()),
+        ReqStatusType::ClientFailure => println!("Server responded with {}.", status.as_string().red()),
+        ReqStatusType::ServerFailure => println!("Server responded with {}.", status.as_string().yellow()),
+        ReqStatusType::UnknownType => println!("Server responded with {}.", status.as_string().blue())
+    };
 }
 
 fn print_response_time(elapsed_millis: i64)
@@ -98,7 +112,11 @@ fn print_body(body: &Vec<u8>)
         Err(e) => panic!("Invalid UTF-8 in response! Aborting print:\n{}", e)
     };
 
-    println!("{}", body_s);
+    if body.len() == 0 {
+        println!("{}", "<body was empty>".cyan());
+    } else {
+        println!("{}", body_s);
+    }
 }
 
 fn print_headers(headers: &Vec<ReqHeader>, title: &str)
