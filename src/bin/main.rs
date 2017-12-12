@@ -123,7 +123,15 @@ fn print_headers(headers: &Vec<ReqHeader>, title: &str)
 {
     println!("{}", title);
     for header in headers {
-        println!("{}", header);
+        let mut values: Vec<&str> = header.value.split(";").collect();
+        let title_len = header.name.len() + 1;
+
+        let initial_value = values.swap_remove(0);
+        println!("{}: {};", header.name.bold(), initial_value);
+
+        for remaining in values {
+            println!("{:width$}{};", " ", remaining, width=title_len);
+        }
     }
     println!("---");
 }

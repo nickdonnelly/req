@@ -105,32 +105,6 @@ impl Req {
             .connector(HttpsConnector::new(4, &handle).unwrap())
             .keep_alive_timeout(self.resolve_timeout(timeout))
             .build(&handle);
- 
-        /*let work = client.request(request).map(|res| {
-            let mut req_body = Vec::new();
-            let mut req_headers: Vec<ReqHeader> = Vec::new();
-            res.headers().iter().for_each(|hv| {
-                 req_headers.push(ReqHeader::from_header_view(&hv));
-            });
-            let body = res.body().collect().wait();
-            if body.is_err() {
-                return Err(ReqError {
-                    exit_code: FailureCode::IOError,
-                    description: "Error reading body."
-                });
-            }
-
-            let body = body.unwrap();
-            body.iter().for_each(|chunk| {
-                req_body.write_all(&chunk);
-            });
-
-
-            let req_res = ReqResponse::new(req_headers, req_body, request_headers);
-            Ok(ReqCommandResult::new_response(req_res))
-        }); */
-
-        let mut t: Vec<String> = Vec::new();
 
         let work = client.request(request);
         let response = core.run(work);
