@@ -1,4 +1,4 @@
-use hyper::Method;
+use hyper::{self, Method};
 use hyper::header::HeaderView;
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
@@ -16,9 +16,6 @@ pub mod req;
 pub use self::req::*;
 
 type Result<T> = result::Result<T, ReqError>;
-
-// TODO
-pub const HELP_STR: &str = "Help String goes here";
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ReqContentType {
@@ -52,11 +49,57 @@ pub struct ReqError {
     pub description: &'static str
 }
 
+/// Describes the type of a response status.
+#[derive(Debug)]
+pub enum ReqStatusType {
+    Success,
+    Redirect,
+    Information,
+    ClientFailure,
+    ServerFailure,
+    UnknownType
+}
+
+/// Wrapper around Hyper's StatusCode
+#[derive(Debug)]
+pub struct ReqResponseStatus {
+    status_int: u16,
+    status_string: String,
+    status_type: ReqStatusType
+}
+
+impl From<hyper::StatusCode> for ReqResponseStatus {
+    fn from(status: hyper::StatusCode) -> Self
+    {
+        let mut s_type = ReqStatusType::UnknownType;
+        if status.is_informational() {
+            s_type = ReqStatusType::Information;
+        } else if status.is_success() {
+            s_type = ReqStatusType::Success;
+        } else if status.is_redirection() {
+            s_type = ReqStatusType::Redirect;
+        } else if status.is_client_error() {
+            s_type = ReqStatusType::ClientFailure;
+        } else if status.is_server_error() {
+            s_type = ReqStatusType::ServerFailure;
+        }
+
+        let s_int = status.as_u16();
+        let s_string = format!("{}", status);
+
+        ReqResponseStatus {
+            status_int: s_int,
+            status_string: s_string,
+            status_type: s_type
+        }
+    }
+}
+
 /// Generic response type
-// TODO: add other bits here.
 #[derive(Debug)]
 pub struct ReqResponse {
     pub body: Vec<u8>,
+    pub status: ReqResponseStatus,
     pub request_headers: Vec<ReqHeader>,
     pub headers: Vec<ReqHeader>
 }
@@ -159,8 +202,6 @@ impl FromStr for ReqCommand {
             Ok(ReqCommand::Request(request_type.unwrap()))
         } else {
             match s.trim().to_lowercase().as_str() {
-                "help"      => Ok(ReqCommand::Show(
-                                     ReqResource::Help(HELP_STR))),
                 "cleanenv"  => Ok(ReqCommand::CleanEnvironment),
                 _           => Err("unknown command")
             }
@@ -216,12 +257,14 @@ impl ReqCommandResult {
 impl ReqResponse {
     pub fn new(
         headers: Vec<ReqHeader>, 
+        status: ReqResponseStatus,
         body: Vec<u8>, 
         request_headers: Vec<ReqHeader>) 
         -> ReqResponse
     {
         ReqResponse {
             headers: headers,
+            status: status,
             request_headers: request_headers,
             body: body,
         }

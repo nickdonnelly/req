@@ -6,6 +6,7 @@ use std::ops::Deref;
 use std::error::Error;
 
 /// Master struct for the actual requesting
+#[derive(Debug)]
 pub struct Req {
     cfg: ReqConfig,
 }
@@ -105,7 +106,7 @@ impl Req {
             .keep_alive_timeout(self.resolve_timeout(timeout))
             .build(&handle);
  
-        let work = client.request(request).map(|res| {
+        /*let work = client.request(request).map(|res| {
             let mut req_body = Vec::new();
             let mut req_headers: Vec<ReqHeader> = Vec::new();
             res.headers().iter().for_each(|hv| {
@@ -127,15 +128,55 @@ impl Req {
 
             let req_res = ReqResponse::new(req_headers, req_body, request_headers);
             Ok(ReqCommandResult::new_response(req_res))
-        });
-        let core_result = core.run(work);
-        if core_result.is_err() {
-            return Err(Req::match_hyper_error(core_result.err()));
+        }); */
+
+        let mut t: Vec<String> = Vec::new();
+
+        let work = client.request(request);
+        let response = core.run(work);
+
+        if response.is_ok() {
+            let response = response.unwrap();
+
+            let mut response_body = Vec::new();
+            let mut response_headers: Vec<ReqHeader> = Vec::new();
+            
+            // == Extract the headers ==
+            response.headers().iter().for_each(|header_view| {
+                response_headers.push(ReqHeader::from_header_view(&header_view));
+            });
+
+            // == Extract the response status ==
+            let response_status = ReqResponseStatus::from(response.status());
+
+            // == Extract the body ==
+            // NOTE: This must be done with the reactor core!
+            // Without it this will block indefinitely if the stream contains more information
+            // than can be retrieved with the initial poll.
+            let mut raw_response_body = core.run(response.body().concat2());
+
+            if raw_response_body.is_err() {
+                return Err(ReqError {
+                    exit_code: FailureCode::IOError,
+                    description: "Could not read from body stream."
+                });
+            }
+
+            let raw_response_body = raw_response_body.unwrap();
+            response_body.extend_from_slice(&*raw_response_body);
+
+            let req_response = ReqResponse::new(
+                response_headers, 
+                response_status,
+                response_body, 
+                request_headers);
+
+            let command_result = ReqCommandResult::new_response(req_response);
+            Ok(command_result)
+        } else {
+            let response_error = response.err();
+            Err(Req::match_hyper_error(response_error))
         }
-
-        let core_result = core_result.unwrap().unwrap();
-
-        Ok(core_result)
     }
 
     fn match_hyper_error(err: Option<error::Error>) -> ReqError
