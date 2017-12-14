@@ -18,7 +18,7 @@ pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
         ("connect", Some(request)) => config_extract::setup_request("connect", request, cfg),
         ("delete", Some(request))  => config_extract::setup_request("delete", request, cfg),
         ("show", Some(show))       => config_extract:: setup_show_resource(show, cfg),
-        _ => cfg 
+        _ => { cfg }
     };
 }
 
@@ -29,7 +29,6 @@ fn build_matches<'a>() -> ArgMatches<'a>
         .author("Nick Donnelly <nick@donnelly.cc>")
         .about("Quick, easy, configurable HTTP client.")
         .setting(AppSettings::GlobalVersion)
-        .setting(AppSettings::SubcommandRequired)
 
         .subcommand(SubCommand::with_name("get")
             .args(request_subcommand_args().as_slice()))
@@ -71,6 +70,7 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
     result.push(payload_arg());
     result.push(header_flag());
     result.push(print_flag());
+    result.push(timeout_flag());
 
     result
 }
@@ -96,7 +96,22 @@ fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
         .long("body")
         .takes_value(true)
         .number_of_values(1)
+        .env("REQ_PAYLOAD_FILE")
         .value_name("PAYLOAD_FILE")
+}
+
+fn timeout_flag<'a, 'b>() -> Arg<'a, 'b>
+{
+    Arg::with_name("timeout")
+        .help("Specify the request timeout in millseconds.")
+        //.set(ArgSettings::
+        .short("t")
+        .long("timeout")
+        .multiple(false)
+        .takes_value(true)
+        .number_of_values(1)
+        .env("REQ_TIMEOUT")
+        .value_name("TIMEOUT")
 }
 
 fn print_flag<'a, 'b>() -> Arg<'a, 'b> 
@@ -118,5 +133,6 @@ fn uri_arg<'a, 'b>() -> Arg<'a, 'b>
       .help("The URI to fire a request to.")
       .required(true)
       .takes_value(true)
+      .env("REQ_URI")
       .value_name("URI")
 }

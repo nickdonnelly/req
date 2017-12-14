@@ -1,5 +1,7 @@
 use hyper::client::Request;
 use hyper::error;
+use tokio_core::reactor::Timeout;
+use futures::future::Either;
 use super::*;
 use std::time::Duration;
 use std::ops::Deref;
@@ -64,7 +66,7 @@ impl Req {
 
         let host_str = self.cfg.host.clone().unwrap();
         let meth = self.cfg.command.as_method().unwrap();
-        let timeout = self.cfg.timeout.clone();
+        let timeout = self.cfg.timeout.clone().unwrap();
         let payload = self.cfg.payload.clone();
         let uri = Uri::from_str(host_str.as_str()).unwrap();
         let mut options: Vec<&ReqOption> = self.cfg.options.iter().collect();
@@ -75,7 +77,6 @@ impl Req {
         } else {
             Payload::empty()
         };
-
 
         options.iter().for_each(|option| {
             match option {
@@ -96,6 +97,8 @@ impl Req {
         let mut request_headers: Vec<ReqHeader> = Vec::new();
 
         Req::add_payload(&mut request, payload);
+        // We must add the headers afterwards in case they want to override the headers
+        // set by add_payload.
         Req::add_request_headers(&mut request, &mut custom_headers);
         Req::copy_request_headers(&mut request, &mut request_headers);
         
@@ -103,10 +106,25 @@ impl Req {
         let handle = core.handle();
         let client = Client::configure()
             .connector(HttpsConnector::new(4, &handle).unwrap())
-            .keep_alive_timeout(self.resolve_timeout(timeout))
+            .keep_alive(false)
             .build(&handle);
 
-        let work = client.request(request);
+        let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
+        let work = client.request(request).select2(timeout)
+            .then(|res| match res{
+                Ok(Either::A((res, _))) => Ok(res), // request sucecss
+                Ok(Either::B((timeout, _))) => Err(ReqError {
+                        exit_code: FailureCode::Timeout,
+                        description: "The request timed out."
+                    }),
+                Err(Either::A((res_err, _))) => 
+                    Err(Req::match_hyper_error(Some(res_err))), // request error
+                Err(Either::B((timeout_err, _))) => Err(ReqError{
+                        exit_code: FailureCode::IOError,
+                        description: "Something went wrong measuring the timeout...Doh!"
+                    })
+            });
+
         let response = core.run(work);
 
         if response.is_ok() {
@@ -149,7 +167,15 @@ impl Req {
             Ok(command_result)
         } else {
             let response_error = response.err();
-            Err(Req::match_hyper_error(response_error))
+            //Err(Req::match_hyper_error(response_error))
+            if response_error.is_none() {
+                Err(ReqError {
+                    exit_code: FailureCode::ClientError,
+                    description: "Silent failure! No error returned!"
+                })
+            } else {
+                Err(response_error.unwrap())
+            }
         }
     }
 
@@ -209,10 +235,12 @@ impl Req {
     {
         let ctt = payload.content_type().clone();
         if let ReqContentType::Empty = ctt {
+            req.headers_mut().set_raw("Content-Length", "0");
             return;
         }
 
         req.headers_mut().set_raw("Content-Type", payload.content_type_str());
+        req.headers_mut().set_raw("Content-Length", format!("{}", payload.data.len()));
         let data = payload.data();
         req.set_body(data);
     }

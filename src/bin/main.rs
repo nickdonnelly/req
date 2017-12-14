@@ -18,8 +18,8 @@ mod utils;
 fn main() {
     dotenv().ok(); // Add the dotenv environment variables to env::vars
     let mut config = ReqConfig::new()
-      .global_defaults()
-      .environment_defaults(); // Environment must be after so it overrides global.
+        .global_defaults()
+        .environment_defaults(); // Environment must be after so it overrides global.
     
     config = utils::process_arguments(config);
     let print_types: Vec<ReqOption> = get_print_options(&config.options);
@@ -94,11 +94,11 @@ fn print_response_status(status: &ReqResponseStatus)
 fn print_response_time(elapsed_millis: i64)
 {
     let printable = if elapsed_millis < 100 {
-        format!("Response Time: {}", elapsed_millis.to_string().green())
+        format!("Response Time: {} ms", elapsed_millis.to_string().green())
     } else if elapsed_millis < 500 { 
-        format!("Response Time: {}", elapsed_millis.to_string().yellow())
+        format!("Response Time: {} ms", elapsed_millis.to_string().yellow())
     } else {
-        format!("Response Time: {}", elapsed_millis.to_string().red())
+        format!("Response Time: {} ms", elapsed_millis.to_string().red())
     };
 
     println!("{}", printable);

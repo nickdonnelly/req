@@ -20,6 +20,7 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     // Add any headers
     let cfg = header_flags(request_matches.values_of("header"), cfg);
     let cfg = print_flags(request_matches.values_of("print"), cfg);
+    let cfg = timeout_flag(request_matches.value_of("timeout"), cfg);
     let cfg = payload_arg(request_matches.value_of("payload"), cfg);
 
     // Add the URI
@@ -42,6 +43,17 @@ pub fn print_flags<'a>(print_flags: Option<Values<'a>>, cfg: ReqConfig)
         }
 
         cfg.options(print_options)
+    } else {
+        cfg
+    }
+}
+
+pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
+    -> ReqConfig
+{
+    if timeout_arg.is_some() {
+        let timeout = timeout_arg.unwrap().trim().parse().unwrap_or(30000);
+        cfg.timeout(timeout)
     } else {
         cfg
     }
