@@ -43,7 +43,7 @@ req post --body some_body.json --print request-headers --print headers https://e
 req get google.com --print response-time 
 ```
 
-Valid print options are: `body`, `headers`, `status`, `request-headers`, and `response-time`.
+Valid print options are: `body`, `headers`, `status`, `config`, `request-headers`, and `response-time`.
 
 ## Requests with bodies
 `req` will try to automatically derive the `Content-Type` by looking at the extension of the file you provide. It

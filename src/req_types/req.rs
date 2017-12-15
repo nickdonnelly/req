@@ -10,7 +10,7 @@ use std::error::Error;
 /// Master struct for the actual requesting
 #[derive(Debug)]
 pub struct Req {
-    cfg: ReqConfig,
+    pub cfg: ReqConfig,
 }
 
 /// Fetch a new Req client for a given config.
@@ -33,7 +33,7 @@ impl Req {
     /// Runs the current config. Can only be safely run once with each
     /// config. Also, this does not validate your configuration, it will
     /// assume it is correct.
-    pub fn run(&self) -> Result<ReqCommandResult> {
+    pub fn run(self) -> Result<ReqCommandResult> {
         use ReqCommand::*;
         let res = match self.cfg.command {
             Request(_) => self.run_request(),
@@ -45,18 +45,23 @@ impl Req {
         }
         res
     }
+    
+    fn clone_options(opts: &[ReqOption]) -> Vec<ReqOption>
+    {
+        let v = opts.to_vec();
+        v
+    }
 
-
-    fn clean_env(&self) -> Result<ReqCommandResult> {
+    fn clean_env(self) -> Result<ReqCommandResult> {
         Ok(ReqCommandResult::new_stub())
     }
 
-    fn run_show(&self) -> Result<ReqCommandResult> {
+    fn run_show(self) -> Result<ReqCommandResult> {
         Ok(ReqCommandResult::new_stub())
     }
 
     #[inline]
-    fn run_request(&self) -> Result<ReqCommandResult> {
+    fn run_request(self) -> Result<ReqCommandResult> {
         use hyper::{ Request, Uri };
         use futures::Future;
  
@@ -70,7 +75,7 @@ impl Req {
         let timeout = self.cfg.timeout.clone().unwrap();
         let payload = self.cfg.payload.clone();
         let uri = Uri::from_str(host_str.as_str()).unwrap();
-        let mut options: Vec<&ReqOption> = self.cfg.options.iter().collect();
+        let mut options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
         let mut custom_headers: Vec<(String, String)> = Vec::new();
 
         let payload = if payload.is_some() {
@@ -81,7 +86,7 @@ impl Req {
 
         options.iter().for_each(|option| {
             match option {
-                &&ReqOption::CUSTOM_HEADER(ref v) => custom_headers.push(v.clone()),
+                &ReqOption::CUSTOM_HEADER(ref v) => custom_headers.push(v.clone()),
                 _ => {}
             };
         });
@@ -164,8 +169,9 @@ impl Req {
                 response_body, 
                 request_headers);
 
-            let command_result = ReqCommandResult::new_response(req_response);
-            Ok(command_result)
+            //let command_result = ReqCommandResult::new_response(req_response, self.cfg);
+            //Ok(command_result)
+            Ok(ReqCommandResult::new_response(req_response, self))
         } else {
             let response_error = response.err();
             if response_error.is_none() {

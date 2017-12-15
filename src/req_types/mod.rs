@@ -127,7 +127,7 @@ pub struct ReqHeader {
     pub value: String
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum ReqOption {
     CUSTOM_HEADER((String, String)), 
     PRINT(String), // string key contains the resource to print
@@ -241,6 +241,7 @@ pub struct ReqConfig {
 pub struct ReqCommandResult {
     pub to_show: Option<String>,
     pub response: Option<ReqResponse>,
+    pub from_config: ReqConfig
 }
 
 impl ReqHeader {
@@ -258,15 +259,17 @@ impl ReqCommandResult {
     pub fn new_stub() -> ReqCommandResult {
         ReqCommandResult {
             to_show: None,
-            response: None
+            response: None,
+            from_config: ReqConfig::new()
         }
     }
 
     /// Get a ReqCommandResult for a request command.
-    pub fn new_response(res: ReqResponse) -> ReqCommandResult {
+    pub fn new_response(res: ReqResponse, req: Req) -> ReqCommandResult {
         ReqCommandResult {
             to_show: None,
-            response: Some(res)
+            response: Some(res),
+            from_config: req.cfg
         }
     }
 }

@@ -53,6 +53,9 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_mil
     if res.to_show.is_some() {
         println!("{}", res.to_show.unwrap());
     } else if res.response.is_some() {
+        // We're gonna move the 'res' object so we have to print the config in case
+        // we need it after the move.
+        let config_string = format!("{}", &res.from_config);
         let response = res.response.unwrap();
 
         if print_flags.len() == 0 {
@@ -69,6 +72,7 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_mil
                         "headers" => print_headers(&response.headers, "Response Headers:"),
                         "request-headers" => print_headers(&response.request_headers, "Request Headers:"),
                         "body" => print_body(&response.body),
+                        "config" => println!("{}", config_string),
                         _ => {}
                     }
                 }

@@ -6,13 +6,6 @@ use std::fmt::{ Formatter, Display };
 use std::result;
 use std::io::Error;
 
-impl Display for ReqError {
-    fn fmt(&self, f: &mut Formatter) ->
-        result::Result<(), fmt::Error> {
-            write!(f, "Exited with code {}.\n{}", self.exit_code.value(), self.description)
-        }
-}
-
 impl ReqConfig {
     /// Instantiates a new, blank config.
     pub fn new() -> ReqConfig {
