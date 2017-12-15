@@ -1,5 +1,6 @@
 use reqlib::{ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload};
 use clap::{Values, ArgMatches};
+use std::env;
 use std::str::FromStr;
 
 pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
@@ -17,7 +18,7 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
         cfg
     };
 
-    // Add any headers
+    // Add any flags
     let cfg = header_flags(request_matches.values_of("header"), cfg);
     let cfg = print_flags(request_matches.values_of("print"), cfg);
     let cfg = timeout_flag(request_matches.value_of("timeout"), cfg);
@@ -26,6 +27,32 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     // Add the URI
     if let Some(uri) = request_matches.value_of("uri") {
         cfg.host_str(uri)
+    } else {
+        cfg
+    }
+}
+
+pub fn setup_no_subcommand<'a>(matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
+{
+    // Add any flags
+    let cfg = header_flags(matches.values_of("header"), cfg);
+    let cfg = print_flags(matches.values_of("print"), cfg);
+    let cfg = timeout_flag(matches.value_of("timeout"), cfg);
+    let cfg = payload_arg(matches.value_of("payload"), cfg);
+
+    if let Ok(v) = env::var("REQ_URI") {
+        let mut env_host = v.to_string();
+        let clap_host = matches.value_of("uri").unwrap(); // safe to unwrap since env:var is defined.
+
+        if ReqConfig::fix_schemeless_uri(clap_host) == env_host {
+            cfg.host(v.to_string())
+        } else if clap_host.starts_with("/") { // we were given a relative path.
+            env_host.push_str(clap_host);
+            cfg.host(env_host)
+        } else {
+            cfg.host_str(clap_host)
+        }
+
     } else {
         cfg
     }

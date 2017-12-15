@@ -31,7 +31,8 @@ impl Req {
 
 
     /// Runs the current config. Can only be safely run once with each
-    /// config.
+    /// config. Also, this does not validate your configuration, it will
+    /// assume it is correct.
     pub fn run(&self) -> Result<ReqCommandResult> {
         use ReqCommand::*;
         let res = match self.cfg.command {
@@ -58,12 +59,12 @@ impl Req {
     fn run_request(&self) -> Result<ReqCommandResult> {
         use hyper::{ Request, Uri };
         use futures::Future;
-
-        let err: Option<ReqError> = self.validate_config_request();
+ 
+        let err = self.validate_request_config();
         if err.is_some() {
             return Err(err.unwrap());
         }
-
+       
         let host_str = self.cfg.host.clone().unwrap();
         let meth = self.cfg.command.as_method().unwrap();
         let timeout = self.cfg.timeout.clone().unwrap();
@@ -167,7 +168,6 @@ impl Req {
             Ok(command_result)
         } else {
             let response_error = response.err();
-            //Err(Req::match_hyper_error(response_error))
             if response_error.is_none() {
                 Err(ReqError {
                     exit_code: FailureCode::ClientError,
@@ -177,6 +177,16 @@ impl Req {
                 Err(response_error.unwrap())
             }
         }
+    }
+
+    fn validate_request_config(&self) -> Option<ReqError>
+    {
+        if self.cfg.host.is_none() {
+            return Some(ReqError{
+                exit_code: FailureCode::ClientError, description: "No remote host given."
+            });
+        }
+        None
     }
 
     fn match_hyper_error(err: Option<error::Error>) -> ReqError
@@ -236,7 +246,6 @@ impl Req {
         let ctt = payload.content_type().clone();
         if let ReqContentType::Empty = ctt {
             req.headers_mut().set_raw("Content-Length", "0");
-            return;
         }
 
         req.headers_mut().set_raw("Content-Type", payload.content_type_str());
@@ -274,18 +283,6 @@ impl Req {
             req.headers_mut().set_raw(header.0.clone(), header.1.clone());
         });
     }
-
-    /// Checks URI, port number, etc. for validity.
-    // TODO
-    fn validate_config_request(&self) -> Option<ReqError>{
-        if self.cfg.host.is_none() {
-            return Some(
-                ReqError{ exit_code: FailureCode::ClientError, description: "No remote host given." }
-            );
-        }
-        None
-    }
-
 
     fn resolve_timeout(&self, timeout: Option<usize>) -> Option<Duration>
     {

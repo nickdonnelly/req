@@ -17,8 +17,8 @@ pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
         ("trace", Some(request))   => config_extract::setup_request("trace", request, cfg),
         ("connect", Some(request)) => config_extract::setup_request("connect", request, cfg),
         ("delete", Some(request))  => config_extract::setup_request("delete", request, cfg),
-        ("show", Some(show))       => config_extract:: setup_show_resource(show, cfg),
-        _ => { cfg }
+        ("show", Some(show))       => config_extract::setup_show_resource(show, cfg),
+        _ => { config_extract::setup_no_subcommand(&matches, cfg) }
     };
 }
 
@@ -29,6 +29,16 @@ fn build_matches<'a>() -> ArgMatches<'a>
         .author("Nick Donnelly <nick@donnelly.cc>")
         .about("Quick, easy, configurable HTTP client.")
         .setting(AppSettings::GlobalVersion)
+        .arg(Arg::with_name("uri")
+            .help("The URI to fire a request to.")
+            .required(false)
+            .takes_value(true)
+            .env("REQ_URI")
+            .value_name("URI"))
+        .arg(payload_arg())
+        .arg(header_flag())
+        .arg(timeout_flag())
+        .arg(print_flag())
 
         .subcommand(SubCommand::with_name("get")
             .args(request_subcommand_args().as_slice()))
@@ -53,7 +63,9 @@ fn build_matches<'a>() -> ArgMatches<'a>
                     .arg(Arg::with_name("resource")
                     .help("The resource you wish to show")
                     .takes_value(true)
+                    .number_of_values(1)
                     .value_name("RESOURCE")))
+
         .arg(Arg::with_name("output-file")
              .help("Specify a file to dump the output to.")
              .short("f")

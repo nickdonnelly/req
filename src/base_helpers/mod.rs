@@ -106,20 +106,15 @@ impl ReqConfig {
     pub fn environment_defaults(mut self) -> ReqConfig {
         use std::env;
 
-        //TODO: Conversions for commented lines (string wrong type)
         for (key, value) in env::vars() {
             let mref = &mut self;
             match key.as_str() {
-                "REQ_URI" | "REQ_HOST" => mref.host = Some(value),
+                "REQ_URI" => env::set_var("REQ_URI", ReqConfig::fix_schemeless_uri(value.as_str())),
                 "REQ_PORT" => mref.port = Some(value.trim().parse()
-                    .expect("REQ_DEFAULT_PORT invalid")),
+                    .expect("REQ_PORT invalid")),
                 "REQ_HTTP_METHOD" => mref.command = 
                     ReqCommand::Request(RequestMethod::from_str(value.as_str())
-                        .expect("REQ_DEFAULT_HTTP_METHOD invalid")),
-                //"REQ_TIMEOUT" => mref.timeout = Some(value.trim().parse()
-                        //.expect("REQ_TIMEOUT must be an integer (in milliseconds).")),
-                //"REQ_PAYLOAD_FILE" => mref.payload = Some(Payload::from_file(value.as_str())
-                        //.unwrap_or(Payload::empty())),
+                        .expect("REQ_HTTP_METHOD invalid")),
                 _ => {}
             }
         }
@@ -130,11 +125,21 @@ impl ReqConfig {
     /// Consumes the given config and produces one that contains
     /// the system-wide defaults. 
     /// Makes the default command `get` and sets timeout to 30s
-    // TODO: These can be configured in the install directory
     pub fn global_defaults(mut self) -> ReqConfig {
         self.command = ReqCommand::Request(RequestMethod::Get);
         self.timeout = Some(30000); 
         self
+    }
+
+    pub fn fix_schemeless_uri(uri: &str) -> String
+    {
+        if uri.starts_with("http") {
+            String::from(uri)
+        } else {
+            let mut s = String::from("http://");
+            s.push_str(uri);
+            s
+        }
     }
 }
 
