@@ -6,20 +6,21 @@
     - [`dotenv`](https://github.com/purpliminal/rust-dotenv) support: use `.env` files to set per-directory defaults so you don't have to type commands over and over again.
       - Lightweight and fast.
 
-      # Environment Awareness
 
-      There are two ways to use `req`'s environment awareness:
-       - Set environment variables manually
-        - Use `.env` files (this is better!)
+# Environment Awareness
 
-        For examples about how to use `.env` files see the examples section.
-        ### Valid environment variables
-        | Environment Variable | Function                                                             | Valid attributes                                                      |
-        |----------------------|----------------------------------------------------------------------|-----------------------------------------------------------------------|
-        | `REQ_HTTP_METHOD`    | Sets the default HTTP method for requests.                           | `get`, `head`, `post`, `put`, `delete`, `options`, `connect`, `trace` |
-        | `REQ_URI`            | Sets the default base URI for requests.                              | Any valid HTTP URI                                                    |
-        | `REQ_TIMEOUT`        | Sets the timeout for requests (in milliseconds).                     | Any non-zero integer                                                  |
-        | `REQ_PAYLOAD_FILE`   | Sets the default payload file for attaching to requests as the body. | Any filename                                                          |
+There are two ways to use `req`'s environment awareness:
+- Set environment variables manually
+- Use `.env` files (this is better!)
+
+For examples about how to use `.env` files see the examples section.
+### Valid environment variables
+| Environment Variable | Function                                                             | Valid attributes                                                      |
+|----------------------|----------------------------------------------------------------------|-----------------------------------------------------------------------|
+| `REQ_HTTP_METHOD`    | Sets the default HTTP method for requests.                           | `get`, `head`, `post`, `put`, `delete`, `options`, `connect`, `trace` |
+| `REQ_URI`            | Sets the default base URI for requests.                              | Any valid HTTP URI                                                    |
+| `REQ_TIMEOUT`        | Sets the timeout for requests (in milliseconds).                     | Any non-zero integer                                                  |
+| `REQ_PAYLOAD_FILE`   | Sets the default payload file for attaching to requests as the body. | Any filename                                                          |
 
 # Examples
 ## Simple Requests
