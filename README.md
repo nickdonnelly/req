@@ -3,8 +3,8 @@
 `req` is an quick, easy, environment-aware HTTP client written in Rust for your ANSI terminal.
 
   - Supports global environment variables for URLs, timeouts, request payloads, and more.
-    - [`dotenv`](https://github.com/purpliminal/rust-dotenv) support: use `.env` files to set per-directory defaults so you don't have to type commands over and over again.
-      - Lightweight and fast.
+  - [`dotenv`](https://github.com/purpliminal/rust-dotenv) support: use `.env` files to set per-directory defaults so you don't have to type commands over and over again.
+  - Lightweight and fast.
 
 
 # Environment Awareness
