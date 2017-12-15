@@ -33,6 +33,18 @@ req options https://example.com # OPTIONS https
 req https://example.com          # GET requests are the default if you omit a verb
 ```
 
+## Custom Output
+You can determine what `req` prints to stdout and in what order.
+```sh
+# Prints only the headers sent in the request and the headers of the response.
+req post --body some_body.json --print request-headers --print headers https://example.com
+
+# Only show the response time.
+req get google.com --print response-time 
+```
+
+Valid print options are: `body`, `headers`, `status`, `request-headers`, and `response-time`.
+
 ## Requests with bodies
 `req` will try to automatically derive the `Content-Type` by looking at the extension of the file you provide. It
 ```sh
