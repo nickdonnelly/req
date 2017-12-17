@@ -1,5 +1,6 @@
 use hyper::client::Request;
 use hyper::error;
+use hyper::Uri;
 use tokio_core::reactor::Timeout;
 use futures::future::Either;
 use super::*;
@@ -35,15 +36,60 @@ impl Req {
     /// assume it is correct.
     pub fn run(self) -> Result<ReqCommandResult> {
         use ReqCommand::*;
-        let res = match self.cfg.command {
-            Request(_) => self.run_request(),
+        let fres = match self.cfg.command {
+            Request(_) => { 
+                if self.cfg.should_redirect() {
+                    let res = self.run_request();
+                    if res.is_err() {
+                        res
+                    } else {
+                        let res = res.unwrap();
+                        let config = res.from_config;
+                        let response = res.response.unwrap();
+                        let redirect_place = response.get_location_header_val();
+
+                        if redirect_place.is_none() || 
+                            !(response.status.status_type() == ReqStatusType::Redirect) 
+                        { 
+                            let r = Req::new_from_cfg(config).unwrap();
+                            let cr = ReqCommandResult::new_response(response, r);
+                            return Ok(cr);
+                        }
+
+                        let redirect_place = redirect_place.unwrap();
+                        let redirect_place = if redirect_place.starts_with("/") {
+                            let hyper_uri = config.host.clone().unwrap().parse::<Uri>().unwrap();
+                            let scheme = hyper_uri.scheme().unwrap_or("http://");
+                            let authority = hyper_uri.authority().unwrap();
+
+                            format!("{}{}{}", scheme, authority, redirect_place)
+                        } else {
+                            redirect_place
+                        };
+
+                        let mut config = config.host(redirect_place);
+                        config.reduce_redirect_count();
+
+                        let new_req = Req::new_from_cfg(config); // run with exact same config on new uri
+
+                        if new_req.is_err() {
+                            Err(new_req.err().unwrap())
+                        } else {
+                            new_req.unwrap().run()
+                        }
+                    }
+
+                } else {
+                    self.run_request()
+                }
+            },
             Show(_) => self.run_show(),
             CleanEnvironment => self.clean_env(),
         };
-        if res.is_err() {
-            return Err(res.err().unwrap());
+        if fres.is_err() {
+            return Err(fres.err().unwrap());
         }
-        res
+        fres
     }
     
     fn clone_options(opts: &[ReqOption]) -> Vec<ReqOption>

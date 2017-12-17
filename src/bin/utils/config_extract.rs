@@ -22,6 +22,7 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     let cfg = header_flags(request_matches.values_of("header"), cfg);
     let cfg = print_flags(request_matches.values_of("print"), cfg);
     let cfg = timeout_flag(request_matches.value_of("timeout"), cfg);
+    let cfg = redirect_flag(request_matches.value_of("max-redirects"), cfg);
     let cfg = payload_arg(request_matches.value_of("payload"), cfg);
 
     // Add the URI
@@ -75,6 +76,34 @@ pub fn print_flags<'a>(print_flags: Option<Values<'a>>, cfg: ReqConfig)
     }
 }
 
+/// NOTE: This function *can* fail if the redirect count is not valid.
+/// In such a case, the program will exit gracefully with an error message.
+pub fn redirect_flag<'a>(redirect_arg: Option<&'a str>, cfg: ReqConfig)
+    -> ReqConfig
+{
+    use reqlib::FailureCode;
+    use std::process;
+
+    if redirect_arg.is_some() {
+        let prov_str = redirect_arg.unwrap();
+        let prov = String::from(prov_str); // for printing if error
+
+        let redirect_count = prov_str.trim().parse();
+
+        if redirect_count.is_err() {
+            eprintln!("Could not parse redirect count! \
+            Expected integer value of at least -1, got {}", prov);
+            process::exit(FailureCode::ClientError.value() as i32);
+        }
+
+        let redirect_count = redirect_count.unwrap();
+
+        cfg.option(ReqOption::FOLLOW_REDIRECTS(redirect_count))
+    } else {
+        cfg
+    }
+}
+
 pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
     -> ReqConfig
 {
@@ -91,7 +120,6 @@ pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
 pub fn payload_arg<'a>(payload_arg: Option<&'a str>, cfg: ReqConfig) 
     -> ReqConfig 
 {
-    use std::fs;
     use std::process;
     use reqlib::FailureCode;
 

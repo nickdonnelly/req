@@ -124,6 +124,36 @@ impl ReqConfig {
         self
     }
 
+    pub fn should_redirect(&self) -> bool
+    {
+        for opt in &self.options {
+            match opt {
+                &ReqOption::FOLLOW_REDIRECTS(ref val) => {
+                    if val == &(-1) || val > &0 {
+                        return true;
+                    }
+                },
+                _ => {}
+            }
+        }
+
+        false
+    }
+
+    pub fn reduce_redirect_count(&mut self)
+    {
+        let new_opts: Vec<ReqOption> = Vec::new();
+
+        for val in self.options.iter_mut() {
+            match val {
+                &mut ReqOption::FOLLOW_REDIRECTS(v) => {
+                    if v > 0 { *val = ReqOption::FOLLOW_REDIRECTS(v - 1); }
+                },
+                _ => {}
+            }
+        }
+    }
+
     pub fn fix_schemeless_uri(uri: &str) -> String
     {
         if uri.starts_with("http") {

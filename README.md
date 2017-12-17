@@ -21,6 +21,7 @@ For examples about how to use `.env` files see the examples section.
 | `REQ_URI`            | Sets the default base URI for requests.                              | Any valid HTTP URI                                                    |
 | `REQ_TIMEOUT`        | Sets the timeout for requests (in milliseconds).                     | Any non-zero integer                                                  |
 | `REQ_PAYLOAD_FILE`   | Sets the default payload file for attaching to requests as the body. | Any filename                                                          |
+| `REQ_MAX_REDIRECTS`  | Sets the maximum number of redirects.                                | Any integer at least zero (-1 for infinite redirects).                |
 
 # Examples
 ## Simple Requests
@@ -31,6 +32,10 @@ req get http://example.com       # These are equivalent
 req options https://example.com # OPTIONS https
 
 req https://example.com          # GET requests are the default if you omit a verb
+
+req get http://example.com/redirect --max-redirects 3 # Follow custom number of redirects
+
+req get http://example.com/redirect --max-redirects -1 # Follow infinite number of redirects
 ```
 
 ## Custom Output

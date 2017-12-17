@@ -50,7 +50,7 @@ pub struct ReqError {
 }
 
 /// Describes the type of a response status.
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone)]
 pub enum ReqStatusType {
     Success,
     Redirect,
@@ -273,21 +273,8 @@ impl ReqCommandResult {
         }
     }
 
-    ///// Test if we should find a redirect to follow.
-    //fn has_redirect(&self) -> bool
-    //{
-        //if let Some(res) = self.response {
-            //for header in res.headers {
-                //if header.name == "Location" {
-                    //return true;
-                //}
-            //}
-            //false
-        //} else {
-            //false
-        //}
-    //}
-
+    /// Test if we should find a redirect to follow.
+    fn 
 }
 
 impl ReqResponse {
@@ -304,16 +291,6 @@ impl ReqResponse {
             request_headers: request_headers,
             body: body,
         }
-    }
-
-    pub fn get_location_header_val(&self) -> Option<String>
-    {
-        for header in &self.headers {
-            if header.name == "Location" {
-                return Some(header.value.clone());
-            }
-        }
-        None
     }
 }
 

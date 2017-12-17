@@ -89,6 +89,13 @@ impl Display for ReqOption {
         match self {
             &ReqOption::PRINT(ref s) => write!(f, "Print {}", s),
             &ReqOption::CUSTOM_HEADER(ref t) => write!(f, "Header {}: {}", t.0, t.1),
+            &ReqOption::FOLLOW_REDIRECTS(ref count) => {
+                if *count == -1 {
+                    write!(f, "Infinite redirects")
+                } else {
+                    write!(f, "Maximum redirects {}", count)
+                }
+            }, 
             _ => write!(f, "Unknown option")
         }
     }

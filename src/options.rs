@@ -1,2 +1,2 @@
-pub type FollowRedirectInfo = usize;
+pub type FollowRedirectInfo = isize;
 pub type CustomEnvFileInfo = String;

@@ -27,7 +27,7 @@ fn build_matches<'a>() -> ArgMatches<'a>
     App::new("Req")
         .version("1.0")
         .author("Nick Donnelly <nick@donnelly.cc>")
-        .about("Quick, easy, configurable HTTP client.")
+        .about("Quick, easy, and environment-aware HTTP client.")
         .setting(AppSettings::GlobalVersion)
         .arg(Arg::with_name("uri")
             .help("The URI to fire a request to.")
@@ -36,6 +36,7 @@ fn build_matches<'a>() -> ArgMatches<'a>
             .env("REQ_URI")
             .value_name("URI"))
         .arg(payload_arg())
+        .arg(redirect_flag())
         .arg(header_flag())
         .arg(timeout_flag())
         .arg(print_flag())
@@ -80,6 +81,7 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
     let mut result: Vec<Arg<'a, 'b>> = Vec::new();
     result.push(uri_arg());
     result.push(payload_arg());
+    result.push(redirect_flag());
     result.push(header_flag());
     result.push(print_flag());
     result.push(timeout_flag());
@@ -116,7 +118,6 @@ fn timeout_flag<'a, 'b>() -> Arg<'a, 'b>
 {
     Arg::with_name("timeout")
         .help("Specify the request timeout in millseconds.")
-        //.set(ArgSettings::
         .short("t")
         .long("timeout")
         .multiple(false)
@@ -134,6 +135,7 @@ fn print_flag<'a, 'b>() -> Arg<'a, 'b>
         .short("p")
         .long("print")
         .number_of_values(1)
+        .possible_values(&["body", "headers", "request-headers", "status", "response-time", "config"])
         .multiple(true)
         .takes_value(true)
         .value_name("PARTIAL")
@@ -147,4 +149,18 @@ fn uri_arg<'a, 'b>() -> Arg<'a, 'b>
       .takes_value(true)
       .env("REQ_URI")
       .value_name("URI")
+}
+
+fn redirect_flag<'a, 'b>() -> Arg<'a, 'b>
+{
+    Arg::with_name("max-redirects")
+        .help("The maximum number of redirects to follow. Set this to -1 for infinite follows.")
+        .set(ArgSettings::AllowLeadingHyphen)
+        .takes_value(true)
+        .number_of_values(1)
+        .short("r")
+        .long("max-redirects")
+        .env("REQ_MAX_REDIRECTS")
+        .value_name("MAX_REDIRECTS")
+        .default_value("0")
 }
