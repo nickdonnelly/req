@@ -109,7 +109,7 @@ fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
         .short("b")
         .long("body")
         .takes_value(true)
-        .number_of_values(1)
+        .multiple(false)
         .env("REQ_PAYLOAD_FILE")
         .value_name("PAYLOAD_FILE")
 }
@@ -120,10 +120,9 @@ fn timeout_flag<'a, 'b>() -> Arg<'a, 'b>
         .help("Specify the request timeout in millseconds.")
         .short("t")
         .long("timeout")
+        .env("REQ_TIMEOUT")
         .multiple(false)
         .takes_value(true)
-        .number_of_values(1)
-        .env("REQ_TIMEOUT")
         .value_name("TIMEOUT")
 }
 
@@ -157,10 +156,10 @@ fn redirect_flag<'a, 'b>() -> Arg<'a, 'b>
         .help("The maximum number of redirects to follow. Set this to -1 for infinite follows.")
         .set(ArgSettings::AllowLeadingHyphen)
         .takes_value(true)
-        .number_of_values(1)
+        .env("REQ_MAX_REDIRECTS")
         .short("r")
         .long("max-redirects")
-        .env("REQ_MAX_REDIRECTS")
         .value_name("MAX_REDIRECTS")
+        .multiple(false)
         .default_value("0")
 }
