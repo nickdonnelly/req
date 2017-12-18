@@ -55,7 +55,12 @@ pub fn setup_no_subcommand<'a>(matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
         }
 
     } else {
-        cfg
+        let clap_host = matches.value_of("uri");
+        if clap_host.is_some() {
+            cfg.host_str(clap_host.unwrap())
+        } else {
+            cfg
+        }
     }
 }
 
