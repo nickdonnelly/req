@@ -39,6 +39,7 @@ pub fn setup_no_subcommand<'a>(matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
     let cfg = header_flags(matches.values_of("header"), cfg);
     let cfg = print_flags(matches.values_of("print"), cfg);
     let cfg = timeout_flag(matches.value_of("timeout"), cfg);
+    let cfg = redirect_flag(matches.value_of("max-redirects"), cfg);
     let cfg = payload_arg(matches.value_of("payload"), cfg);
 
     if let Ok(v) = env::var("REQ_URI") {
