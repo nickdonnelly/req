@@ -92,3 +92,12 @@ req get google.com  # Run a GET to google
 
 req put --body none # Run a POST request to https://myproject.xyz without a body
 ```
+
+
+# Compiling and Running Tests
+
+## Compiling
+To compile the project, simply run `cargo build --release`. 
+
+## Tests
+To run the test suite, you have to pass the `--test-threads=1` flag to the test executable. Cargo will run tests in parallel by default, but we can't do that in this case so we have to use only one thread. This is because some of the tests play with environment variables, so they can't run in parallel or they would step on one another's toes. 

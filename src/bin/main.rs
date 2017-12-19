@@ -21,7 +21,9 @@ fn main() {
         .global_defaults()
         .environment_defaults(); // Environment must be after so it overrides global.
     
-    config = utils::process_arguments(config);
+    config = utils::process_arguments(config)
+        .unwrap_or_else(|e| e.exit());
+
     let print_types: Vec<ReqOption> = get_print_options(&config.options);
 
     let req = Req::new_from_cfg(config).unwrap();

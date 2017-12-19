@@ -391,15 +391,6 @@ mod tests {
     }
 
     #[test]
-    fn req_command_from_string_3() {
-        let commandstr = "help";
-        let result = ReqCommand::from_str(commandstr);
-
-        assert_eq!(result.unwrap(), 
-            ReqCommand::Show(ReqResource::Help(HELP_STR)));
-    }
-
-    #[test]
     #[should_panic]
     fn req_command_from_string_panic() {
         let commandstr = "notacommand";

@@ -272,7 +272,8 @@ impl ReqContentType {
    /// Convert file extension (with or without ".") to a ReqContentType.
    /// #Examples 
    /// ```
-   /// assert_eq!(ReqContentType::Html, ReqContentType::from_str(".html"));
+   /// use reqlib::ReqContentType;
+   /// assert_eq!(ReqContentType::Html, ReqContentType::from_extension(".html"));
    /// ```
    pub fn from_extension(ext: &str) -> ReqContentType
    {

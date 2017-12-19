@@ -1,14 +1,25 @@
 use reqlib::{ReqConfig};
-use clap::{Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand};
+use clap::{self, Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand};
 
 mod config_extract;
 
-/// Modifies the given config with all options given by in the given Args.
-pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
-{
-    let matches = build_matches();
+#[cfg(test)]
+mod tests;
 
-    return match matches.subcommand() {
+/// Modifies the given config with all options given by in the given Args.
+pub fn process_arguments(cfg: ReqConfig) -> Result<ReqConfig, clap::Error>
+{
+    let matches = build_app().get_matches_safe();
+
+    match matches {
+        Ok(val) => Ok(process_arg_matches(val, cfg)),
+        Err(e) => Err(e)
+    }
+}
+
+fn process_arg_matches<'a>(matches: ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
+{
+    match matches.subcommand() {
         ("get", Some(request))     => config_extract::setup_request("get", request, cfg),
         ("post", Some(request))    => config_extract::setup_request("post", request, cfg),
         ("put", Some(request))     => config_extract::setup_request("put", request, cfg),
@@ -18,11 +29,11 @@ pub fn process_arguments(cfg: ReqConfig) -> ReqConfig
         ("connect", Some(request)) => config_extract::setup_request("connect", request, cfg),
         ("delete", Some(request))  => config_extract::setup_request("delete", request, cfg),
         ("show", Some(show))       => config_extract::setup_show_resource(show, cfg),
-        _ => { config_extract::setup_no_subcommand(&matches, cfg) }
-    };
+        _                          => config_extract::setup_no_subcommand(&matches, cfg)
+    }
 }
 
-fn build_matches<'a>() -> ArgMatches<'a>
+fn build_app<'a, 'b>() -> App<'a, 'b>
 {
     App::new("Req")
         .version("1.0")
@@ -73,7 +84,6 @@ fn build_matches<'a>() -> ArgMatches<'a>
              .long("output-file")
              .takes_value(true)
              .value_name("FILENAME"))
-        .get_matches()
 }
 
 fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>> 

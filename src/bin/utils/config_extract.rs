@@ -110,12 +110,23 @@ pub fn redirect_flag<'a>(redirect_arg: Option<&'a str>, cfg: ReqConfig)
     }
 }
 
+/// NOTE: This function *can* fail if the timeout couldn't be parsed.
+/// In such a case, it will exit gracefully with an error message.
 pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
     -> ReqConfig
 {
+    use std::process;
+    use reqlib::FailureCode;
+
     if timeout_arg.is_some() {
-        let timeout = timeout_arg.unwrap().trim().parse().unwrap_or(30000);
-        cfg.timeout(timeout)
+        let timeout = timeout_arg.unwrap().trim().parse::<usize>();
+
+        if timeout.is_err() {
+            eprintln!("Could not parse the given timeout! Make sure you give a valid number value.");
+            process::exit(FailureCode::ClientError.value() as i32);
+        }
+
+        cfg.timeout(timeout.unwrap())
     } else {
         cfg
     }
@@ -133,7 +144,7 @@ pub fn payload_arg<'a>(payload_arg: Option<&'a str>, cfg: ReqConfig)
         let filename = payload_arg.unwrap();
         let payload = Payload::from_file(filename.clone());
         if payload.is_err() {
-            println!("Could not open {}", filename);
+            eprintln!("Could not open {}", filename);
             process::exit(FailureCode::IOError.value() as i32);
         } else {
             cfg.payload(payload.unwrap())
