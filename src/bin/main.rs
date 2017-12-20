@@ -53,7 +53,7 @@ fn get_print_options(opts: &Vec<ReqOption>) -> Vec<ReqOption> {
 
 fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_millis: i64) {
     if res.to_show.is_some() {
-        println!("{}", res.to_show.unwrap());
+        print_show_command(res);
     } else if res.response.is_some() {
         // We're gonna move the 'res' object so we have to print the config in case
         // we need it after the move.
@@ -83,6 +83,18 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_mil
     } else {
         println!("Result was unexpected: {:?}", res);
     }
+}
+
+fn print_show_command(res: ReqCommandResult) {
+    match res.from_config.command {
+        ReqCommand::Show(ReqResource::Body(_)) => 
+            print_with_title("Payload looks like:", res.to_show.unwrap()),
+        _ => {}
+    }
+}
+
+fn print_with_title(title: &str, to_print: String) {
+    println!("{}\n{}", title.cyan(), to_print);
 }
 
 fn print_response_status(status: &ReqResponseStatus)

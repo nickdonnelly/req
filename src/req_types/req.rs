@@ -98,15 +98,22 @@ impl Req {
         v
     }
 
+    #[inline(always)]
     fn clean_env(self) -> Result<ReqCommandResult> {
         Ok(ReqCommandResult::new_stub())
     }
 
+    #[inline(always)]
     fn run_show(self) -> Result<ReqCommandResult> {
-        Ok(ReqCommandResult::new_stub())
+        let to_show = match &self.cfg.command {
+            &ReqCommand::Show(ReqResource::Body(ref b)) => format!("{}", b),
+            _ => String::new()
+        };
+
+        Ok(ReqCommandResult::new_to_show(to_show, self))
     }
 
-    #[inline]
+    #[inline(always)]
     fn run_request(self) -> Result<ReqCommandResult> {
         use hyper::{ Request, Uri };
         use futures::Future;

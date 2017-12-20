@@ -5,7 +5,10 @@ use std::str::FromStr;
 
 pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
-    cfg
+    match show_matches.subcommand() {
+        ("payload", Some(payload_matches)) => super::show::show_payload(cfg, payload_matches),
+        _ => cfg
+    }
 }
 
 pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig

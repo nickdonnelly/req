@@ -39,7 +39,8 @@ pub enum FailureCode {
     NoError,
     ClientError,
     IOError,
-    Timeout
+    Timeout,
+    Unknown
 }
 
 /// Generic error type. Exit code may be ignored if it is zero.
@@ -140,10 +141,9 @@ pub enum ReqOption {
 /// specific environment variable, or the help page.
 #[derive(PartialEq, Debug)]
 pub enum ReqResource {
-    Help(&'static str),
-    //HelpEmoji(&'static str),
     Env,
-    EnvVar(String)
+    EnvVar(String),
+    Body(Payload)
 }
 
 /// The possible types of HTTP requests.
@@ -256,7 +256,8 @@ impl ReqHeader {
 
 impl ReqCommandResult {
     /// Get an empty ReqCommandResult
-    pub fn new_stub() -> ReqCommandResult {
+    pub fn new_stub() -> ReqCommandResult 
+    {
         ReqCommandResult {
             to_show: None,
             response: None,
@@ -265,10 +266,21 @@ impl ReqCommandResult {
     }
 
     /// Get a ReqCommandResult for a request command.
-    pub fn new_response(res: ReqResponse, req: Req) -> ReqCommandResult {
+    pub fn new_response(res: ReqResponse, req: Req) -> ReqCommandResult 
+    {
         ReqCommandResult {
             to_show: None,
             response: Some(res),
+            from_config: req.cfg
+        }
+    }
+
+    /// Get a ReqCommandResult for a show command.
+    pub fn new_to_show(to_show: String, req: Req) -> ReqCommandResult
+    {
+        ReqCommandResult {
+            to_show: Some(to_show),
+            response: None,
             from_config: req.cfg
         }
     }

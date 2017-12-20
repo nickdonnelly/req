@@ -2,6 +2,7 @@ use reqlib::{ReqConfig};
 use clap::{self, Arg, ArgSettings, ArgMatches, App, AppSettings, SubCommand};
 
 mod config_extract;
+mod show;
 
 #[cfg(test)]
 mod tests;
@@ -71,12 +72,11 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
         .subcommand(SubCommand::with_name("patch")
             .args(request_subcommand_args().as_slice()))
 
-        .subcommand(SubCommand::with_name("show").about("Show the specified resource.")
-                    .arg(Arg::with_name("resource")
-                    .help("The resource you wish to show")
-                    .takes_value(true)
-                    .number_of_values(1)
-                    .value_name("RESOURCE")))
+        .subcommand(SubCommand::with_name("show")
+                .about("Show the specified resource.")
+                .setting(AppSettings::SubcommandRequiredElseHelp)
+                .subcommands(show_subcommands().into_iter()))
+
 
         .arg(Arg::with_name("output-file")
              .help("Specify a file to dump the output to.")
@@ -84,6 +84,25 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
              .long("output-file")
              .takes_value(true)
              .value_name("FILENAME"))
+}
+
+fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
+{
+    let mut result: Vec<App> = Vec::new();
+
+    /* Payload Subcommand */
+    // TODO: Add argument for encoding.
+    result.push(SubCommand::with_name("payload")
+        .arg(Arg::with_name("payload")
+            .takes_value(true)
+            .multiple(false)
+            .required(true)
+            .env("REQ_PAYLOAD_FILE")
+            .value_name("PAYLOAD_FILE")));
+
+    /* TODO: Environment Subcommand */
+
+    result
 }
 
 fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>> 

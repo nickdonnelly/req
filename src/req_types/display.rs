@@ -8,7 +8,8 @@ impl FailureCode {
             FailureCode::NoError     => 0,
             FailureCode::ClientError => 1,
             FailureCode::IOError     => 2,
-            FailureCode::Timeout     => 3
+            FailureCode::Timeout     => 3,
+            FailureCode::Unknown     => 99,
         }
     }
 }
