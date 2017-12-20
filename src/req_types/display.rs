@@ -105,20 +105,38 @@ impl Display for ReqOption {
 impl Display for Payload {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result
     {
+        use std::fmt::Write;
+
         let utf8_decoded = str::from_utf8(&self.data);
         if utf8_decoded.is_err() {
-          return write!(f, "{:?}", &self.data);
+            let mut strbuf = String::new();
+            for chunk in &self.data {
+                write!(&mut strbuf, "0x{:X} ", chunk);
+            }
+            return write!(f, "Detected Content-Type: {}\n\
+                              Print mode: Raw Bytes (space-separated hex)\n\
+                              ---\n{}", &self.content_type.as_str(), strbuf);
         }
-        write!(f, "{}", utf8_decoded.unwrap())
+        write!(f, "Detected Content-Type: {}\n\
+                   Print mode: UTF-8\n\
+                   ---\n\
+                   {}", &self.content_type.as_str(), utf8_decoded.unwrap())
     }
 }
 
 impl Display for ReqResponse{
     fn fmt(&self, f: &mut Formatter) -> fmt::Result
     {
+        use std::fmt::Write;
+
         let utf8_decoded = str::from_utf8(&self.body);
         if utf8_decoded.is_err() {
-            return write!(f, "{:?}", &self.body);
+            let mut strbuf = String::new();
+            for chunk in &self.body {
+                write!(&mut strbuf, "{}", chunk);
+            }
+            //return write!(f, "{:?}", &self.body);
+            return write!(f, "{}", strbuf);
         }
         write!(f, "{}", utf8_decoded.unwrap())
     }

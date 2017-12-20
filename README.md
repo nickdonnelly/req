@@ -93,6 +93,12 @@ req get google.com  # Run a GET to google
 req put --body none # Run a POST request to https://myproject.xyz without a body
 ```
 
+## Other Commands
+
+One of the most versatile `req` commands is `req show`. This command allows you to view information about your configuration or potential requests without actually needing to fire them. 
+
+For example, if you wanted to see what a payload would look like without having to actually fire a request with that payload attached, you can run `req show payload [PAYLOAD_FILE]` to print exactly what would be applied to your request.
+
 
 # Compiling and Running Tests
 
