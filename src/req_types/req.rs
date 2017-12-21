@@ -98,6 +98,20 @@ impl Req {
         v
     }
 
+    fn env_string() -> String
+    {
+        use std::env;
+        use std::fmt::Write;
+
+        let mut s = String::new();
+        for (k, v) in env::vars() {
+            if k.starts_with("REQ_") {
+                write!(&mut s, "{}={}\n", k, v);
+            }
+        }
+        s
+    }
+
     #[inline(always)]
     fn clean_env(self) -> Result<ReqCommandResult> {
         Ok(ReqCommandResult::new_stub())
@@ -105,8 +119,17 @@ impl Req {
 
     #[inline(always)]
     fn run_show(self) -> Result<ReqCommandResult> {
+        use std::env;
+
         let to_show = match &self.cfg.command {
             &ReqCommand::Show(ReqResource::Body(ref b)) => format!("{}", b),
+            &ReqCommand::Show(ReqResource::EnvVar(ref var)) => {
+                match env::var(var) {
+                    Ok(valstr) => format!("{}={}", var, valstr),
+                    Err(e) => format!("{}=<no value>", var)
+                }
+            },
+            &ReqCommand::Show(ReqResource::Env) => Req::env_string(),
             _ => String::new()
         };
 

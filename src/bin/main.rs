@@ -89,7 +89,20 @@ fn print_show_command(res: ReqCommandResult) {
     match res.from_config.command {
         ReqCommand::Show(ReqResource::Body(_)) => 
             print_with_title("Payload looks like:", res.to_show.unwrap()),
-        _ => {}
+        ReqCommand::Show(ReqResource::EnvVar(v)) => {
+            println!("{}", res.to_show.unwrap());
+        },
+        ReqCommand::Show(ReqResource::Env) => {
+            let ts = res.to_show.unwrap();
+
+            if ts.trim() == "" {
+                println!("{}\n{}", "All set REQ_ vars:".cyan(), "<none set>".red());
+            } else {
+                println!("{}\n{}", "All set REQ_ vars:".cyan(), ts);
+            }
+
+        },
+        _ => { println!("{}", "<Nothing to print".cyan()); }
     }
 }
 

@@ -93,6 +93,8 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
     /* Payload Subcommand */
     // TODO: Add argument for encoding.
     result.push(SubCommand::with_name("payload")
+        .about("Displays how a payload would look when attached to a request. \
+                This is useful for things that will look like UTF-8 text.")
         .arg(Arg::with_name("payload")
             .takes_value(true)
             .multiple(false)
@@ -100,7 +102,17 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
             .env("REQ_PAYLOAD_FILE")
             .value_name("PAYLOAD_FILE")));
 
-    /* TODO: Environment Subcommand */
+    result.push(SubCommand::with_name("env")
+        .about("Displays the current req values from the environment. \
+                Prioritizes .env over other values.")
+        .arg(Arg::with_name("env_variable")
+            .help("Choose a single variable to see the value of by req name.")
+            .possible_values(&["all", "uri", "timeout", "http_method", "max_redirects", "payload_file"])
+            .required(false)
+            .takes_value(true)
+            .value_name("VARIABLE")
+            .number_of_values(1)
+            .multiple(false)));
 
     result
 }

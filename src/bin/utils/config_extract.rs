@@ -1,5 +1,6 @@
-use reqlib::{ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload};
+use reqlib::{ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload, FailureCode};
 use clap::{Values, ArgMatches};
+use std::process;
 use std::env;
 use std::str::FromStr;
 
@@ -7,7 +8,12 @@ pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) ->
 {
     match show_matches.subcommand() {
         ("payload", Some(payload_matches)) => super::show::show_payload(cfg, payload_matches),
-        _ => cfg
+        ("env", Some(env_matches)) => super::show::show_env(cfg, env_matches),
+        (other, _) => { 
+            eprintln!("Unknown subcommand '{}' for show.", other); 
+            process::exit(FailureCode::ClientError.value() as i32);
+            cfg
+        }
     }
 }
 

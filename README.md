@@ -99,6 +99,8 @@ One of the most versatile `req` commands is `req show`. This command allows you 
 
 For example, if you wanted to see what a payload would look like without having to actually fire a request with that payload attached, you can run `req show payload [PAYLOAD_FILE]` to print exactly what would be applied to your request.
 
+You can also use `show env` to see how req sees your environment.
+
 
 # Compiling and Running Tests
 
