@@ -35,10 +35,26 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     let cfg = payload_arg(request_matches.value_of("payload"), cfg);
 
     // Add the URI
-    if let Some(uri) = request_matches.value_of("uri") {
-        cfg.host_str(uri)
+    if let Ok(v) = env::var("REQ_URI") {
+        let mut env_host = v.to_string();
+        let clap_host = request_matches.value_of("uri").unwrap(); // safe to unwrap since env:var is defined.
+
+        if ReqConfig::fix_schemeless_uri(clap_host) == env_host {
+            cfg.host(v.to_string())
+        } else if clap_host.starts_with("/") { // we were given a relative path.
+            env_host.push_str(clap_host);
+            cfg.host(env_host)
+        } else {
+            cfg.host_str(clap_host)
+        }
+
     } else {
-        cfg
+        let clap_host = request_matches.value_of("uri");
+        if clap_host.is_some() {
+            cfg.host_str(clap_host.unwrap())
+        } else {
+            cfg
+        }
     }
 }
 
