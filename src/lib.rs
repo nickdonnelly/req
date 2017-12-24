@@ -7,7 +7,7 @@ extern crate bytes;
 
 mod base_helpers;
 mod req_types;
-mod encode;
+pub mod encode;
 pub mod options;
 
 pub use base_helpers::*;

@@ -1,12 +1,8 @@
 use std;
-/* 
-    let encoder = encode::base64::Base64Encoder::new(&payload);
-    let result: Result<String, Error> = encoder.encode();
-*/
 
-mod base64;
+pub mod base64;
 
-trait Encoder {
+pub trait Encoder {
     fn encode(&self) -> Result<String, EncodeError>;
 }
 

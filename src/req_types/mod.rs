@@ -122,6 +122,12 @@ pub struct ReqResponse {
     pub headers: Vec<ReqHeader>
 }
 
+#[derive(PartialEq, Debug, Clone)]
+pub enum EncodingType {
+    Utf8,
+    Base64
+}
+
 #[derive(PartialEq, Debug)]
 pub struct ReqHeader {
     pub name: String,
@@ -132,6 +138,7 @@ pub struct ReqHeader {
 pub enum ReqOption {
     CUSTOM_HEADER((String, String)), 
     PRINT(String),                        // string key contains the resource to print
+    ENCODING(EncodingType),
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
     CUSTOM_ENV_FILE(CustomEnvFileInfo)    // filepath
 }

@@ -48,6 +48,7 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
             .env("REQ_URI")
             .value_name("URI"))
         .arg(payload_arg())
+        .arg(encoding_flag())
         .arg(redirect_flag())
         .arg(header_flag())
         .arg(timeout_flag())
@@ -91,7 +92,6 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
     let mut result: Vec<App> = Vec::new();
 
     /* Payload Subcommand */
-    // TODO: Add argument for encoding.
     result.push(SubCommand::with_name("payload")
         .about("Displays how a payload would look when attached to a request. \
                 This is useful for things that will look like UTF-8 text.")
@@ -122,6 +122,7 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
     let mut result: Vec<Arg<'a, 'b>> = Vec::new();
     result.push(uri_arg());
     result.push(payload_arg());
+    result.push(encoding_flag());
     result.push(redirect_flag());
     result.push(header_flag());
     result.push(print_flag());
@@ -203,4 +204,19 @@ fn redirect_flag<'a, 'b>() -> Arg<'a, 'b>
         .value_name("MAX_REDIRECTS")
         .multiple(false)
         .default_value("0")
+}
+
+fn encoding_flag<'a, 'b>() -> Arg<'a, 'b>
+{
+    Arg::with_name("encoding")
+        .help("Automatically encode the payload using this type.")
+        .takes_value(true)
+        .env("REQ_ENCODING")
+        .short("e")
+        .long("encoding")
+        .value_name("ENCODING")
+        .default_value("utf8")
+        .requires("payload")
+        .possible_values(&["base64", "utf8"])
+        .multiple(false)
 }
