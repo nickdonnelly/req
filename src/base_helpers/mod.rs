@@ -341,14 +341,17 @@ impl FromStr for ReqContentType {
 
 #[cfg(test)]
 mod tests {
-    use super::{Payload, Req, ReqConfig, ReqCommand, ReqContentType, RequestMethod};
+    use super::{Payload, Req, ReqConfig, ReqCommand, ReqContentType, RequestMethod, };
+    use super::super::encode::Encoding;
     fn configuration_optionless() -> ReqConfig {
         ReqConfig {
             command: ReqCommand::Request(RequestMethod::Get),
             host: Some(String::from("https://www.google.com")),
             port: Some(443),
             timeout: Some(10000),
-            payload: Some(Payload { data: vec![1,2,3], content_type: ReqContentType::OctetStream }),
+            payload: Some(Payload { data: vec![1,2,3], 
+                content_type: ReqContentType::OctetStream, 
+                encoding: Encoding::NoEncoding }),
             options: Vec::new()
         }
     }
