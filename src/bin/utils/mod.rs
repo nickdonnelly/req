@@ -214,9 +214,9 @@ fn encoding_flag<'a, 'b>() -> Arg<'a, 'b>
         .env("REQ_ENCODING")
         .short("e")
         .long("encoding")
+        .required(false)
         .value_name("ENCODING")
-        .default_value("utf8")
         .requires("payload")
-        .possible_values(&["base64", "utf8"])
+        .possible_values(&["base64"])
         .multiple(false)
 }

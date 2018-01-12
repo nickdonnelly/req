@@ -1,5 +1,7 @@
 pub use super::req_types::*;
 
+use super::encode::Encoding;
+
 use std::str::FromStr;
 use std::fmt;
 use std::fmt::{ Formatter, Display };
@@ -172,7 +174,8 @@ impl Clone for Payload {
     {
         Payload {
             data: self.data.to_vec(),
-            content_type: self.content_type.clone()
+            content_type: self.content_type.clone(),
+            encoding: Encoding::NoEncoding
         }
     }
 }
@@ -183,7 +186,8 @@ impl Payload {
     {
         Payload {
             data: Vec::new(),
-            content_type: ReqContentType::Empty
+            content_type: ReqContentType::Empty,
+            encoding: Encoding::NoEncoding
         }
     }
 
@@ -192,7 +196,8 @@ impl Payload {
     {
         Payload {
             data: data,
-            content_type: content_type
+            content_type: content_type,
+            encoding: Encoding::NoEncoding
         }
     }
 
@@ -202,7 +207,8 @@ impl Payload {
     {
         Payload {
             data: data,
-            content_type: ReqContentType::Custom(String::from(content_type))
+            content_type: ReqContentType::Custom(String::from(content_type)),
+            encoding: Encoding::NoEncoding
         }
     }
 
@@ -237,7 +243,8 @@ impl Payload {
             
             Ok(Payload {
                 data: buf,
-                content_type: ctt
+                content_type: ctt,
+                encoding: Encoding::NoEncoding // TODO: Detect if the file is already encoded
             })
         } else {
             Err(try_file.err().unwrap())
@@ -263,8 +270,14 @@ impl Payload {
     }
     
     /// Get a reference to the data inside the payload.
-    pub fn data_ref(&self) -> &Vec<u8> {
+    pub fn data_ref(&self) -> &Vec<u8> 
+    {
         &self.data
+    }
+
+    pub fn encoding(&self) -> Encoding
+    {
+        self.encoding.clone()
     }
 }
 
@@ -295,8 +308,8 @@ impl ReqContentType {
           ReqContentType::Css => "application/css",
           ReqContentType::Javascript => "application/javascript",
           ReqContentType::Zip => "application/zip",
-          ReqContentType::OctetStream | _ => "application/octet-stream",
           ReqContentType::Custom(ref v) => v.as_str(),
+          ReqContentType::OctetStream | _ => "application/octet-stream",
       }
    }
 }

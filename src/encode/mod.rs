@@ -1,9 +1,27 @@
 use std;
+use super::Payload;
 
 pub mod base64;
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum Encoding {
+    NoEncoding,
+    Base64,
+    UnknownEncoding(String)
+}
+
+impl Encoding {
+    pub fn from_str(s: &str) -> Option<Self>
+    {
+        match s {
+            "base64" => Some(Encoding::Base64),
+            _        => None
+        }
+    }
+}
+
 pub trait Encoder {
-    fn encode(&self) -> Result<String, EncodeError>;
+    fn encode(&self, &mut Payload) -> Result<(), EncodeError>;
 }
 
 #[derive(Debug)]

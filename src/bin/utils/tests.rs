@@ -55,6 +55,7 @@ fn test_normal_with_scheme()
     purge_env();
     let config = config_from_str("req post https://memes.google.com");
 
+    println!("CONFIG HOST; {:?}", config.host);
     assert_eq!(config.host.unwrap(), "https://memes.google.com");
     assert_eq!(config.command, ReqCommand::Request(RequestMethod::Post));
 }

@@ -1,6 +1,5 @@
-use reqlib::{ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload, FailureCode, EncodingType};
-use reqlib::encode::Encoder;
-use reqlib::encode::base64::Base64Encoder;
+use reqlib::{ ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload, FailureCode };
+use reqlib::encode::Encoding;
 use clap::{Values, ArgMatches};
 use std::process;
 use std::env;
@@ -35,8 +34,7 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     let cfg = timeout_flag(request_matches.value_of("timeout"), cfg);
     let cfg = redirect_flag(request_matches.value_of("max-redirects"), cfg);
     // *PAYLOAD MUST COME BEFORE ENCODING!
-    let cfg = payload_arg(request_matches.value_of("payload"), cfg);
-    let cfg = encoding_arg(request_matches.value_of("encoding"), cfg);
+    let cfg = payload_arg(request_matches.value_of("payload"), request_matches.value_of("encoding"), cfg);
 
     // Add the URI
     if let Ok(v) = env::var("REQ_URI") {
@@ -70,8 +68,7 @@ pub fn setup_no_subcommand<'a>(matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
     let cfg = timeout_flag(matches.value_of("timeout"), cfg);
     let cfg = redirect_flag(matches.value_of("max-redirects"), cfg);
     // ** PAYLOAD MUST COME BEFORE ENCODING!
-    let cfg = payload_arg(matches.value_of("payload"), cfg);
-    let cfg = encoding_arg(matches.value_of("encoding"), cfg);
+    let cfg = payload_arg(matches.value_of("payload"), matches.value_of("encoding"), cfg);
 
     if let Ok(v) = env::var("REQ_URI") {
         let mut env_host = v.to_string();
@@ -165,7 +162,7 @@ pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
 
 /// NOTE: This function *can* fail if the filename provided was not found.
 /// In such a case, it will exit gracefully with an error message.
-pub fn payload_arg<'a>(payload_arg: Option<&'a str>, cfg: ReqConfig) 
+pub fn payload_arg<'a>(payload_arg: Option<&'a str>, encoding_arg: Option<&'a str>, cfg: ReqConfig) 
     -> ReqConfig 
 {
     use std::process;
@@ -178,7 +175,22 @@ pub fn payload_arg<'a>(payload_arg: Option<&'a str>, cfg: ReqConfig)
             eprintln!("Could not open {}", filename);
             process::exit(FailureCode::IOError.value() as i32);
         } else {
-            cfg.payload(payload.unwrap())
+            let mut payload = payload.unwrap();
+            
+            let (payload, encoding_type) = match encoding_arg {
+                Some(v) => {
+                    (encode_payload(v, payload), Encoding::from_str(v))
+                },
+                None => (payload, None)
+            };
+
+            if encoding_type.is_some() {
+                cfg.option(ReqOption::ENCODING(encoding_type.unwrap()))
+                   .payload(payload)
+            } else {
+                cfg.payload(payload)
+            }
+
         }
     } else {
         cfg
@@ -203,19 +215,24 @@ pub fn header_flags<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfi
     }
 }
 
-/// Do not run this function before you've checked for a payload.
-pub fn encoding_arg<'a>(enc_matches: Option<&'a str>, cfg: ReqConfig)
-    -> ReqConfig
+fn encode_payload(encoding_arg: &str, mut payload: Payload) -> Payload
 {
-    match enc_matches {
-        Some(v) => {
-            match v {
-                "base64" => {
-                    cfg.option(ReqOption::ENCODING(EncodingType::Base64))
-                },
-                _        => cfg
-            }
-        },
-        None => cfg
+    use reqlib::encode::{ self, Encoder, base64 };
+
+    let encoder = match encoding_arg {
+        "base64"        => encode::base64::Base64Encoder::new(),
+        _               => {
+            println!("Something went wrong selecting an encoder!");
+            process::exit(FailureCode::Unknown.value() as i32);
+        }
+    };
+
+    let result = encoder.encode(&mut payload);
+    if result.is_err() {
+        println!("Could not encode input file:\n{}", result.err().unwrap());
+        process::exit(FailureCode::IOError.value() as i32);
     }
+
+    payload
 }
+

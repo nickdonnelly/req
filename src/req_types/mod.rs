@@ -5,6 +5,8 @@ use hyper_tls::HttpsConnector;
 use hyper::{ Body, Client };
 use futures::Stream;
 use tokio_core::reactor::Core;
+
+use super::encode::Encoding;
 use super::options::*;
 
 use std::io::{self, Write};
@@ -31,7 +33,8 @@ pub enum ReqContentType {
 #[derive(Debug, PartialEq)]
 pub struct Payload {
     pub data: Vec<u8>,
-    pub content_type: ReqContentType
+    pub content_type: ReqContentType,
+    pub encoding: Encoding
 }
 
 #[derive(Debug)]
@@ -122,12 +125,6 @@ pub struct ReqResponse {
     pub headers: Vec<ReqHeader>
 }
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum EncodingType {
-    Utf8,
-    Base64
-}
-
 #[derive(PartialEq, Debug)]
 pub struct ReqHeader {
     pub name: String,
@@ -138,7 +135,7 @@ pub struct ReqHeader {
 pub enum ReqOption {
     CUSTOM_HEADER((String, String)), 
     PRINT(String),                        // string key contains the resource to print
-    ENCODING(EncodingType),
+    ENCODING(Encoding),
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
     CUSTOM_ENV_FILE(CustomEnvFileInfo)    // filepath
 }
