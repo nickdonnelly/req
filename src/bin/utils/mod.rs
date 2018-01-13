@@ -100,7 +100,9 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
             .multiple(false)
             .required(true)
             .env("REQ_PAYLOAD_FILE")
-            .value_name("PAYLOAD_FILE")));
+            .value_name("PAYLOAD_FILE"))
+        .arg(encoding_flag()));
+
 
     result.push(SubCommand::with_name("env")
         .about("Displays the current req values from the environment. \
@@ -216,7 +218,7 @@ fn encoding_flag<'a, 'b>() -> Arg<'a, 'b>
         .long("encoding")
         .required(false)
         .value_name("ENCODING")
-        .requires("payload")
-        .possible_values(&["base64"])
+        //.requires("payload")
+        .possible_values(&["none", "base64"])
         .multiple(false)
 }

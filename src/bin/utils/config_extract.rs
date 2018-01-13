@@ -215,15 +215,15 @@ pub fn header_flags<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfi
     }
 }
 
-fn encode_payload(encoding_arg: &str, mut payload: Payload) -> Payload
+/// Encode a payload using the type given in the encoding_arg (from command line).
+pub fn encode_payload(encoding_arg: &str, mut payload: Payload) -> Payload
 {
     use reqlib::encode::{ self, Encoder, base64 };
 
     let encoder = match encoding_arg {
         "base64"        => encode::base64::Base64Encoder::new(),
         _               => {
-            println!("Something went wrong selecting an encoder!");
-            process::exit(FailureCode::Unknown.value() as i32);
+            return payload;
         }
     };
 

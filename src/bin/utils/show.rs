@@ -5,14 +5,15 @@
  * TODO: Move validations of arguments to clap-rs "Validators".
  ******/
 
-use reqlib::{ ReqConfig, Payload, FailureCode, ReqResource, ReqCommand };
+use reqlib::{ ReqConfig, Payload, FailureCode, ReqResource, ReqCommand, ReqOption };
+use super::super::encode::Encoding;
 use clap::{ Values, ArgMatches };
 use std::process;
 
 pub fn show_payload<'a>(cfg: ReqConfig, payload_args: &ArgMatches<'a>) -> ReqConfig
 {
-
-    match payload_args.value_of("payload") {
+    // URGENT TODO: Encoding in this block - the flag is already present for this command.
+    let mut payload = match payload_args.value_of("payload") {
         Some(filename) => {
             let payload = Payload::from_file(filename);
 
@@ -21,17 +22,31 @@ pub fn show_payload<'a>(cfg: ReqConfig, payload_args: &ArgMatches<'a>) -> ReqCon
                 process::exit(FailureCode::IOError.value() as i32);
             }
 
-            let payload = payload.unwrap();
+            payload.unwrap()
 
-            cfg.command(ReqCommand::Show(ReqResource::Body(payload)))
         },
         None => { 
             eprintln!("No payload file provided!");
             process::exit(FailureCode::ClientError.value() as i32);
-
-            cfg // for compilation purposes.
         }
+    };
+
+    let (payload, encoding_type) = match payload_args.value_of("encoding") {
+        Some(v) => {
+            (super::config_extract::encode_payload(v, payload), Encoding::from_str(v))
+        },
+        None => {
+            (payload, None)
+        }
+    };
+
+    if encoding_type.is_some() {
+        cfg.option(ReqOption::ENCODING(encoding_type.unwrap()))
+           .command(ReqCommand::Show(ReqResource::Body(payload)))
+    } else {
+        cfg.command(ReqCommand::Show(ReqResource::Body(payload)))
     }
+
 }
 
 pub fn show_env<'a>(cfg: ReqConfig, env_args: &ArgMatches<'a>) -> ReqConfig
