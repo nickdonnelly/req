@@ -22,6 +22,7 @@ For examples about how to use `.env` files see the examples section.
 | `REQ_TIMEOUT`        | Sets the timeout for requests (in milliseconds).                     | Any non-zero integer                                                  |
 | `REQ_PAYLOAD_FILE`   | Sets the default payload file for attaching to requests as the body. | Any filename                                                          |
 | `REQ_MAX_REDIRECTS`  | Sets the maximum number of redirects.                                | Any integer at least zero (-1 for infinite redirects).                |
+| `REQ_ENCODING`       | Sets the default encoding for the request body.                      | `none`, `base64`                                                      |
 
 # Examples
 ## Simple Requests
@@ -50,7 +51,7 @@ req get google.com --print response-time
 
 Valid print options are: `body`, `headers`, `status`, `config`, `request-headers`, and `response-time`.
 
-## Requests with bodies
+## Requests with bodies and headers
 `req` will try to automatically derive the `Content-Type` by looking at the extension of the file you provide. It
 ```sh
 # Automatically derives 'Content-Type: application/json'
@@ -61,6 +62,9 @@ req post --body extensionless_file https://example.com
 
 # You can also set the content type manually
 req post --body extensionless_file -h "Content-Type" "image/png" https://example.com 
+
+# Encode your body automatically
+req post --body file.png --encoding base64 https://example.com
 
 # Or any header!
 req get --header HeaderName HeaderValue example.com
@@ -97,7 +101,7 @@ req put --body none # Run a POST request to https://myproject.xyz without a body
 
 One of the most versatile `req` commands is `req show`. This command allows you to view information about your configuration or potential requests without actually needing to fire them. 
 
-For example, if you wanted to see what a payload would look like without having to actually fire a request with that payload attached, you can run `req show payload [PAYLOAD_FILE]` to print exactly what would be applied to your request.
+For example, if you wanted to see what a payload would look like **without having to actually fire a request with that payload attached**, you can run `req show payload [PAYLOAD_FILE]` to print exactly what would be applied to your request.
 
 You can also use `show env` to see how req sees your environment.
 

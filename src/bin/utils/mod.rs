@@ -218,7 +218,6 @@ fn encoding_flag<'a, 'b>() -> Arg<'a, 'b>
         .long("encoding")
         .required(false)
         .value_name("ENCODING")
-        //.requires("payload")
         .possible_values(&["none", "base64"])
         .multiple(false)
 }
