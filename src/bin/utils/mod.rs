@@ -49,6 +49,7 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
             .value_name("URI"))
         .arg(payload_arg())
         .arg(encoding_flag())
+        .arg(body_prefix_flag())
         .arg(redirect_flag())
         .arg(header_flag())
         .arg(timeout_flag())
@@ -101,7 +102,8 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
             .required(true)
             .env("REQ_PAYLOAD_FILE")
             .value_name("PAYLOAD_FILE"))
-        .arg(encoding_flag()));
+        .arg(encoding_flag())
+        .arg(body_prefix_flag()));
 
 
     result.push(SubCommand::with_name("env")
@@ -125,6 +127,7 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
     result.push(uri_arg());
     result.push(payload_arg());
     result.push(encoding_flag());
+    result.push(body_prefix_flag());
     result.push(redirect_flag());
     result.push(header_flag());
     result.push(print_flag());
@@ -219,5 +222,17 @@ fn encoding_flag<'a, 'b>() -> Arg<'a, 'b>
         .required(false)
         .value_name("ENCODING")
         .possible_values(&["none", "base64"])
+        .multiple(false)
+}
+
+fn body_prefix_flag<'a, 'b>() -> Arg<'a, 'b>
+{
+    Arg::with_name("body-prefix")
+        .help("Append a prefix to the request body (added after encoding if encoding was applied).")
+        .takes_value(true)
+        .env("REQ_BODY_PREFIX")
+        .long("body-prefix")
+        .required(false)
+        .value_name("PREFIX")
         .multiple(false)
 }

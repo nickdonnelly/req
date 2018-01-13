@@ -279,6 +279,12 @@ impl Payload {
     {
         self.encoding.clone()
     }
+
+    pub fn insert_prefix(&mut self, mut prefix: Vec<u8>)
+    {
+        prefix.append(&mut self.data);
+        self.data = prefix;
+    }
 }
 
 impl ReqContentType {

@@ -31,7 +31,7 @@ pub fn show_payload<'a>(cfg: ReqConfig, payload_args: &ArgMatches<'a>) -> ReqCon
         }
     };
 
-    let (payload, encoding_type) = match payload_args.value_of("encoding") {
+    let (mut payload, encoding_type) = match payload_args.value_of("encoding") {
         Some(v) => {
             (super::config_extract::encode_payload(v, payload), Encoding::from_str(v))
         },
@@ -39,6 +39,10 @@ pub fn show_payload<'a>(cfg: ReqConfig, payload_args: &ArgMatches<'a>) -> ReqCon
             (payload, None)
         }
     };
+
+    if let Some(prefix) = payload_args.value_of("body-prefix") {
+        payload.insert_prefix(String::from(prefix).into_bytes());
+    }
 
     if encoding_type.is_some() {
         cfg.option(ReqOption::ENCODING(encoding_type.unwrap()))

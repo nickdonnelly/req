@@ -23,6 +23,7 @@ For examples about how to use `.env` files see the examples section.
 | `REQ_PAYLOAD_FILE`   | Sets the default payload file for attaching to requests as the body. | Any filename                                                          |
 | `REQ_MAX_REDIRECTS`  | Sets the maximum number of redirects.                                | Any integer at least zero (-1 for infinite redirects).                |
 | `REQ_ENCODING`       | Sets the default encoding for the request body.                      | `none`, `base64`                                                      |
+| `REQ_BODY_PREFIX`    | Sets the default prefix to attach to the body (after encoding).      | Any string (attached as raw bytes).                                   |
 
 # Examples
 ## Simple Requests
@@ -65,6 +66,9 @@ req post --body extensionless_file -h "Content-Type" "image/png" https://example
 
 # Encode your body automatically
 req post --body file.png --encoding base64 https://example.com
+
+# Web friendliness of base64 is easy too:
+req post --body file.png --encoding base64 --body-prefix "data:image/png;base64," https://displayableimage.com
 
 # Or any header!
 req get --header HeaderName HeaderValue example.com

@@ -34,7 +34,9 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     let cfg = timeout_flag(request_matches.value_of("timeout"), cfg);
     let cfg = redirect_flag(request_matches.value_of("max-redirects"), cfg);
     // *PAYLOAD MUST COME BEFORE ENCODING!
-    let cfg = payload_arg(request_matches.value_of("payload"), request_matches.value_of("encoding"), cfg);
+    let cfg = payload_arg(request_matches.value_of("payload"), 
+                          request_matches.value_of("encoding"), 
+                          request_matches.value_of("body-prefix"), cfg);
 
     // Add the URI
     if let Ok(v) = env::var("REQ_URI") {
@@ -68,7 +70,9 @@ pub fn setup_no_subcommand<'a>(matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
     let cfg = timeout_flag(matches.value_of("timeout"), cfg);
     let cfg = redirect_flag(matches.value_of("max-redirects"), cfg);
     // ** PAYLOAD MUST COME BEFORE ENCODING!
-    let cfg = payload_arg(matches.value_of("payload"), matches.value_of("encoding"), cfg);
+    let cfg = payload_arg(matches.value_of("payload"), 
+                          matches.value_of("encoding"), 
+                          matches.value_of("body-prefix"), cfg);
 
     if let Ok(v) = env::var("REQ_URI") {
         let mut env_host = v.to_string();
@@ -162,7 +166,11 @@ pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
 
 /// NOTE: This function *can* fail if the filename provided was not found.
 /// In such a case, it will exit gracefully with an error message.
-pub fn payload_arg<'a>(payload_arg: Option<&'a str>, encoding_arg: Option<&'a str>, cfg: ReqConfig) 
+pub fn payload_arg<'a>(
+    payload_arg: Option<&'a str>, 
+    encoding_arg: Option<&'a str>, 
+    prefix_arg: Option<&'a str>,
+    cfg: ReqConfig) 
     -> ReqConfig 
 {
     use std::process;
@@ -177,12 +185,16 @@ pub fn payload_arg<'a>(payload_arg: Option<&'a str>, encoding_arg: Option<&'a st
         } else {
             let mut payload = payload.unwrap();
             
-            let (payload, encoding_type) = match encoding_arg {
+            let (mut payload, encoding_type) = match encoding_arg {
                 Some(v) => {
                     (encode_payload(v, payload), Encoding::from_str(v))
                 },
                 None => (payload, None)
             };
+
+            if let Some(prefix) = prefix_arg {
+                payload.insert_prefix(String::from(prefix).into_bytes());
+            }
 
             if encoding_type.is_some() {
                 cfg.option(ReqOption::ENCODING(encoding_type.unwrap()))
