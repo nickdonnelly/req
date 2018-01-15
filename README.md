@@ -24,6 +24,7 @@ For examples about how to use `.env` files see the examples section.
 | `REQ_MAX_REDIRECTS`  | Sets the maximum number of redirects.                                | Any integer at least zero (-1 for infinite redirects).                |
 | `REQ_ENCODING`       | Sets the default encoding for the request body.                      | `none`, `base64`                                                      |
 | `REQ_BODY_PREFIX`    | Sets the default prefix to attach to the body (after encoding).      | Any string (attached as raw bytes).                                   |
+| `REQ_HEADERS`        | Sets the file to find headers in.                                    | Any filename (see Header Files)                                       |
 
 # Examples
 ## Simple Requests
@@ -76,6 +77,20 @@ req get --header HeaderName HeaderValue example.com
 # You can also modify the timeout (default is 30 seconds):
 req get --timeout 5000 google.com # GET request with 5 second timeout
 ```
+
+## Header Files
+Suppose `header.req` is a file that looks like this:
+```
+HeaderName HeaderValue
+Header-2 HeaderValue2
+Another-Header This is a value that spans multiple portions.
+```
+
+Running `req post --header-file header.req https://someurl.com/` will load each header from the file, one
+per line, into your request. If you want to overwrite some header value, simply use the `--header` flag to
+explicitly change the value, as headers from `--header` take precedence over those from `--header-file`. 
+The environment variable for this option is `REQ_HEADERS=filename`. You can ignore the environment for
+this option by specifying the value 'none' to the '--header-file' flag.
 
 ## Example with `dotenv`/`.env`
 

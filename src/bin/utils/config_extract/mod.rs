@@ -29,6 +29,7 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
     };
 
     // Add any flags
+    let cfg = header_file_flag(request_matches.value_of("header-file"), cfg);
     let cfg = header_flags(request_matches.values_of("header"), cfg);
     let cfg = print_flags(request_matches.values_of("print"), cfg);
     let cfg = timeout_flag(request_matches.value_of("timeout"), cfg);
@@ -65,6 +66,7 @@ pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqC
 pub fn setup_no_subcommand<'a>(matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
     // Add any flags
+    let cfg = header_file_flag(matches.value_of("header-file"), cfg);
     let cfg = header_flags(matches.values_of("header"), cfg);
     let cfg = print_flags(matches.values_of("print"), cfg);
     let cfg = timeout_flag(matches.value_of("timeout"), cfg);
@@ -209,7 +211,8 @@ pub fn payload_arg<'a>(
     }
 }
 
-pub fn header_flags<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfig {
+pub fn header_flags<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfig 
+{
     if headers.is_some() {
         let mut header_options: Vec<ReqOption> = Vec::new();
 
@@ -225,6 +228,47 @@ pub fn header_flags<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfi
     } else {
         cfg
     }
+}
+
+/// Parses the header file in the flag and adds all headers to config. 
+/// This can fail when the file isn't found or there is a syntax error.
+pub fn header_file_flag(header_file: Option<&str>, cfg: ReqConfig) -> ReqConfig
+{
+    use std::fs::File;
+    use std::error::Error;
+    use std::io::{ BufRead, BufReader };
+    use std::process;
+
+    match header_file {
+        None => cfg,
+        Some("none") => cfg,
+        Some(filename) => {
+            let try_file = File::open(String::from(filename));
+            if try_file.is_err() {
+                eprintln!("Could not open header file:\n{}", try_file.err().unwrap().description());
+                process::exit(FailureCode::IOError.value() as i32);
+            }
+            let file = BufReader::new(try_file.unwrap());
+            let mut options: Vec<ReqOption> = Vec::new();
+
+            for line in file.lines() {
+                let line = line.unwrap();
+                let parts: Vec<&str> = line.trim().splitn(2, ' ').collect();
+                if parts.len() != 2 { // syntax error, only name provided (or empty line)
+                    eprintln!("Could not parse header file! Make sure you only have one header per line!");
+                    process::exit(FailureCode::ClientError.value() as i32);
+                }
+
+                let header_name = String::from(parts[0].trim());
+                let header_value = String::from(parts[1].trim());
+
+                options.push(ReqOption::CUSTOM_HEADER((header_name, header_value)));
+            }
+
+            cfg.options(options)
+        }
+    }
+    
 }
 
 /// Encode a payload using the type given in the encoding_arg (from command line).

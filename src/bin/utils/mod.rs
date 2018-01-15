@@ -52,6 +52,7 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
         .arg(body_prefix_flag())
         .arg(redirect_flag())
         .arg(header_flag())
+        .arg(header_file_flag())
         .arg(timeout_flag())
         .arg(print_flag())
 
@@ -78,14 +79,6 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
                 .about("Show the specified resource.")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommands(show_subcommands().into_iter()))
-
-
-        .arg(Arg::with_name("output-file")
-             .help("Specify a file to dump the output to.")
-             .short("f")
-             .long("output-file")
-             .takes_value(true)
-             .value_name("FILENAME"))
 }
 
 fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
@@ -130,6 +123,7 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
     result.push(body_prefix_flag());
     result.push(redirect_flag());
     result.push(header_flag());
+    result.push(header_file_flag());
     result.push(print_flag());
     result.push(timeout_flag());
 
@@ -139,13 +133,26 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
 fn header_flag<'a, 'b>() -> Arg<'a, 'b>
 {
     Arg::with_name("header")
-        .help("Specify a custom header. Use the format \"Header Name\" \"Value\"")
+        .help("Specify a custom header. Overrides headers in --header-file.\
+               Use the format \"Header Name\" \"Value\"")
         .short("h")
         .long("header")
         .multiple(true)
         .number_of_values(2)
         .takes_value(true)
         .value_name("HEADER")
+}
+
+fn header_file_flag<'a, 'b>() -> Arg<'a, 'b>
+{
+    Arg::with_name("header-file")
+        .help("Specify multiple headers in a file (one per line, same format as --header).\
+               Use the value 'none' to ignore the environment variable.")
+        .short("f")
+        .long("header-file")
+        .multiple(false)
+        .env("REQ_HEADERS")
+        .value_name("FILE")
 }
 
 fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
