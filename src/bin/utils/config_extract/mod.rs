@@ -5,6 +5,23 @@ use std::process;
 use std::env;
 use std::str::FromStr;
 
+pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
+{
+    match socket_matches.value_of("port") {
+        Some(port) => {
+            let _port = port.parse();
+
+            if _port.is_err() {
+                eprintln!("{} is not a valid port!", port);
+                process::exit(FailureCode::ClientError.value() as i32);
+            }
+
+            cfg.command(ReqCommand::Socket(_port.unwrap()))
+        },
+        _ => cfg
+    }
+}
+
 pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
     match show_matches.subcommand() {

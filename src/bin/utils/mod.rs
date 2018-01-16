@@ -30,6 +30,7 @@ fn process_arg_matches<'a>(matches: ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
         ("connect", Some(request)) => config_extract::setup_request("connect", request, cfg),
         ("delete", Some(request))  => config_extract::setup_request("delete", request, cfg),
         ("show", Some(show))       => config_extract::setup_show_resource(show, cfg),
+        ("socket", Some(sock))     => config_extract::setup_socket(sock, cfg),
         _                          => config_extract::setup_no_subcommand(&matches, cfg)
     }
 }
@@ -79,6 +80,13 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
                 .about("Show the specified resource.")
                 .setting(AppSettings::SubcommandRequiredElseHelp)
                 .subcommands(show_subcommands().into_iter()))
+
+        .subcommand(SubCommand::with_name("socket")
+            .about("Launch a socket on the given port to read incoming requests easily.")
+            .arg(Arg::with_name("port")
+                 .takes_value(true)
+                 .number_of_values(1)
+                 .value_name("PORT")))
 }
 
 fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
@@ -104,6 +112,7 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
                 Prioritizes .env over other values.")
         .arg(Arg::with_name("env_variable")
             .help("Choose a single variable to see the value of by req name.")
+            // TODO: update these to be current (add extras)
             .possible_values(&["all", "uri", "timeout", "http_method", "max_redirects", "payload_file"])
             .required(false)
             .takes_value(true)

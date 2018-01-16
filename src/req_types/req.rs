@@ -84,6 +84,7 @@ impl Req {
                 }
             },
             Show(_) => self.run_show(),
+            Socket(port) => self.run_socket(port),
             CleanEnvironment => self.clean_env(),
         };
         if fres.is_err() {
@@ -110,6 +111,16 @@ impl Req {
             }
         }
         s
+    }
+
+    #[inline(always)]
+    fn run_socket(self, port: usize) -> Result<ReqCommandResult>
+    {
+        use quicksock::QuickSocket;
+        let qs = QuickSocket::new();
+        println!("Starting socket on  127.0.0.1:{}", &port);
+        qs.start(port);
+        Ok(ReqCommandResult::new_stub()) // we never get here.
     }
 
     #[inline(always)]

@@ -9,6 +9,7 @@ mod base_helpers;
 mod req_types;
 pub mod encode;
 pub mod options;
+pub mod quicksock;
 
 pub use base_helpers::*;
 

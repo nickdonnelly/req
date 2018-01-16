@@ -77,6 +77,7 @@ impl Display for ReqConfig {
                         payload_string, options_string)
             },
             &ReqCommand::Show(ref resource) => format!("Show {:?}", resource),
+            &ReqCommand::Socket(ref port) => format!("Socket on {}", port),
             &ReqCommand::CleanEnvironment => format!("Clean Environment")
         };
 

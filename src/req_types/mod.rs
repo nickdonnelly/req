@@ -197,6 +197,7 @@ impl FromStr for RequestMethod {
 pub enum ReqCommand {
     Request(RequestMethod),
     CleanEnvironment,
+    Socket(usize), // port
     Show(ReqResource)
 }
 
