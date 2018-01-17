@@ -1,12 +1,36 @@
 use reqlib::{ ReqConfig, ReqOption, RequestMethod, ReqCommand, Payload, FailureCode };
 use reqlib::encode::Encoding;
 use clap::{Values, ArgMatches};
+use hyper::StatusCode;
 use std::process;
 use std::env;
 use std::str::FromStr;
 
 pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
+    let response_code = match socket_matches.value_of("response-code") {
+        Some(val) => { 
+            let code_int = val.parse::<u16>();
+            let code = if code_int.is_err() {
+                println!("Couldn't parse response-code. Make sure you chose a valid one!");
+                process::exit(FailureCode::ClientError.value() as i32);
+            } else {
+                match StatusCode::try_from(code_int.unwrap()) {
+                    Ok(s) => s,
+                    Err(_) => StatusCode::Ok
+                }
+            };
+            code
+        },
+        None => StatusCode::Ok 
+    };
+
+    let cfg = if response_code != StatusCode::Ok {
+        cfg.option(ReqOption::CUSTOM_SOCKET_RESPONSE_CODE(response_code))
+    } else {
+        cfg
+    };
+
     match socket_matches.value_of("port") {
         Some(port) => {
             let _port = port.parse();

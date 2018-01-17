@@ -1,6 +1,7 @@
 extern crate reqlib;
 extern crate dotenv;
 extern crate clap;
+extern crate hyper;
 extern crate stopwatch;
 extern crate colored;
 
@@ -116,8 +117,8 @@ fn print_response_status(status: &ReqResponseStatus)
         ReqStatusType::Success => println!("Server responded with {}.", status.as_string().green()),
         ReqStatusType::Redirect => println!("Server responded with {}.", status.as_string().magenta()),
         ReqStatusType::Information => println!("Server responded with {}.", status.as_string().cyan()),
-        ReqStatusType::ClientFailure => println!("Server responded with {}.", status.as_string().red()),
-        ReqStatusType::ServerFailure => println!("Server responded with {}.", status.as_string().yellow()),
+        ReqStatusType::ClientFailure => println!("Server responded with {}.", status.as_string().yellow()),
+        ReqStatusType::ServerFailure => println!("Server responded with {}.", status.as_string().red()),
         ReqStatusType::UnknownType => println!("Server responded with {}.", status.as_string().blue())
     };
 }

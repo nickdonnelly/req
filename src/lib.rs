@@ -4,6 +4,7 @@ extern crate hyper_tls;
 extern crate tokio_core;
 extern crate futures;
 extern crate bytes;
+extern crate colored; // for socket.
 
 mod base_helpers;
 mod req_types;

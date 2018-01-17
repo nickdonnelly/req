@@ -1,4 +1,4 @@
-use hyper::{self, Method};
+use hyper::{ self, Method, StatusCode };
 use hyper::header::HeaderView;
 use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
@@ -137,6 +137,7 @@ pub enum ReqOption {
     PRINT(String),                        // string key contains the resource to print
     ENCODING(Encoding),
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
+    CUSTOM_SOCKET_RESPONSE_CODE(StatusCode),
     CUSTOM_ENV_FILE(CustomEnvFileInfo)    // filepath
 }
 

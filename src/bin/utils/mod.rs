@@ -85,8 +85,13 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
             .about("Launch a socket on the given port to read incoming requests easily.")
             .arg(Arg::with_name("port")
                  .takes_value(true)
+                 .default_value("8000")
                  .number_of_values(1)
-                 .value_name("PORT")))
+                 .value_name("PORT"))
+            .arg(Arg::with_name("response-code")
+                .takes_value(true).default_value("200").number_of_values(1)
+                .long("response-code").short("c")
+                .value_name("RESPONSE_CODE")))
 }
 
 fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>

@@ -116,10 +116,23 @@ impl Req {
     #[inline(always)]
     fn run_socket(self, port: usize) -> Result<ReqCommandResult>
     {
+        use std::collections::HashMap;
+        use hyper::StatusCode;
         use quicksock::QuickSocket;
+
+        let mut options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
+        let mut sc = StatusCode::Ok;
+        
+        for option in options {
+            match option {
+                ReqOption::CUSTOM_SOCKET_RESPONSE_CODE(c) => { sc = c },
+                _ => {}
+            }
+        }
+
         let qs = QuickSocket::new();
         println!("Starting socket on  127.0.0.1:{}", &port);
-        qs.start(port);
+        qs.start(port, sc);
         Ok(ReqCommandResult::new_stub()) // we never get here.
     }
 
@@ -256,8 +269,6 @@ impl Req {
                 response_body, 
                 request_headers);
 
-            //let command_result = ReqCommandResult::new_response(req_response, self.cfg);
-            //Ok(command_result)
             Ok(ReqCommandResult::new_response(req_response, self))
         } else {
             let response_error = response.err();
