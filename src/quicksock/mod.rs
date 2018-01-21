@@ -15,7 +15,8 @@ use colored::*;
 use super::{ ReqResponse };
 
 pub struct QuickSocket {
-    service_name: String
+    service_name: String,
+    socket_type: SocketType
 }
 
 #[derive(Debug)]
@@ -23,13 +24,21 @@ struct QuickSocketError {
     description: String
 }
 
+#[derive(PartialEq, Debug)]
+pub enum SocketType {
+    Talkback,
+    Literal(String)
+}
+
 impl QuickSocket {
 
     /// Returns an instance of QuickSocket ready to open on 
-    pub fn new() -> QuickSocket
+    /// @param t The type of socket you'd like (talkback or literal)
+    pub fn new(t: SocketType) -> QuickSocket
     {
         QuickSocket { 
-            service_name: String::from("echo")
+            service_name: String::from("echo"),
+            socket_type: t
         }
     }
 
@@ -39,10 +48,18 @@ impl QuickSocket {
         let mut addr = String::from("127.0.0.1:");
         addr.push_str(&format!("{}", port));
         let addr = addr.parse().unwrap();
-        let server = Http::new().keep_alive(false).bind(&addr, move || Ok(EchoService{
-            status_code: sc
-        })).unwrap();
-        server.run().unwrap()
+        if let SocketType::Literal(lit) = self.socket_type {
+            let server = Http::new().keep_alive(false).bind(&addr, move || Ok(OkService{
+                status_code: sc,
+                phrase: lit.clone() // this has to be here otherwise it only fulfills FnOnce, not Fn
+            })).unwrap();
+            server.run().unwrap()
+        } else { // default to talkback, other clauses to go here if more are added
+            let server = Http::new().keep_alive(false).bind(&addr, move || Ok(EchoService{
+                status_code: sc
+            })).unwrap();
+            server.run().unwrap()
+        }
     }
 
 }
@@ -79,18 +96,37 @@ struct OkService {
 
 impl Service for OkService {
     type Request = Request;
-    type Response = Response;
     type Error = hyper::Error;
+    type Response = Response;
 
     type Future = Box<Future<Item=Self::Response, Error=Self::Error>>;
 
-    fn call(&self, _req: Request) -> Self::Future 
+    fn call(&self, req: Request) -> Self::Future 
     {
-        Box::new(futures::future::ok(
-            Response::new()
-                .with_header(ContentLength(self.phrase.len() as u64))
-                .with_body(self.phrase.clone())
-        ))
+        let headers = req.headers().clone();
+        let method = req.method().clone();
+        let uri = req.uri().clone();
+        let path = String::from(format!("{}", uri).as_str());
+        let status = self.status_code.clone();
+        let phrase = self.phrase.clone();
+        let mut response_body_start = pretty_print(headers, method, path);
+
+        Box::new(req.body().concat2().map(move |body_chunk|{
+            let fbody = body_chunk.iter().cloned().collect::<Vec<u8>>();
+            let blen = fbody.len();
+            let body_string = String::from_utf8(fbody);
+            let body_string = if body_string.is_err() {
+                format!("<{} {}>", blen.to_string().green().bold(), " bytes".green().bold())
+            } else {
+                format!("{}", body_string.unwrap().italic())
+            };
+
+            response_body_start.push_str(&body_string);
+            response_body_start.push_str(format!("{}", "\n---End Body---\n\n".red()).as_str());
+            println!("{}", response_body_start);
+            let body = Body::from(phrase);
+            Response::new().with_status(status).with_body(body)
+        }))
     }
 }
 

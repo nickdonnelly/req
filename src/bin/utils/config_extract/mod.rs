@@ -8,6 +8,7 @@ use std::str::FromStr;
 
 pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
+    // Parse reponse code
     let response_code = match socket_matches.value_of("response-code") {
         Some(val) => { 
             let code_int = val.parse::<u16>();
@@ -31,6 +32,21 @@ pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
         cfg
     };
 
+    // Parse repsonse-mode
+    let cfg = match socket_matches.value_of("response-mode") {
+        Some(val) => {
+            if val == "literal" {
+                let lit = socket_matches.value_of("literal-response").unwrap();
+
+                cfg.option(ReqOption::LITERAL_SOCKET(String::from(lit)))
+            } else {
+                cfg
+            }
+        },
+        None => cfg
+    };
+
+    // Parse port and terminate
     match socket_matches.value_of("port") {
         Some(port) => {
             let _port = port.parse();

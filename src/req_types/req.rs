@@ -118,19 +118,21 @@ impl Req {
     {
         use std::collections::HashMap;
         use hyper::StatusCode;
-        use quicksock::QuickSocket;
+        use quicksock::{ QuickSocket, SocketType };
 
         let mut options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
         let mut sc = StatusCode::Ok;
+        let mut socket_type = SocketType::Talkback;
         
         for option in options {
             match option {
                 ReqOption::CUSTOM_SOCKET_RESPONSE_CODE(c) => { sc = c },
+                ReqOption::LITERAL_SOCKET(literal) => { socket_type = SocketType::Literal(literal) },
                 _ => {}
             }
         }
 
-        let qs = QuickSocket::new();
+        let qs = QuickSocket::new(socket_type);
         println!("Starting socket on  127.0.0.1:{}", &port);
         qs.start(port, sc);
         Ok(ReqCommandResult::new_stub()) // we never get here.

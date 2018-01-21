@@ -138,6 +138,7 @@ pub enum ReqOption {
     ENCODING(Encoding),
     FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
     CUSTOM_SOCKET_RESPONSE_CODE(StatusCode),
+    LITERAL_SOCKET(String),
     CUSTOM_ENV_FILE(CustomEnvFileInfo)    // filepath
 }
 
