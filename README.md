@@ -141,6 +141,8 @@ req socket 8008 # Give it a port number if you don't want it to run on the defau
 
 ```
 
+[Test Image](https://cf-e2.streamablevideo.com/video/mp4/2wnfs.mp4?token=1516530198-weBsLl62OBQOInv0PcnnIHtG93TxObyh9Kch1NVpqQY%3D)
+
 ## Other Commands
 
 One of the most versatile `req` commands is `req show`. This command allows you to view information about your configuration or potential requests without actually needing to fire them. 
