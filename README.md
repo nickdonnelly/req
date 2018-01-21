@@ -25,6 +25,10 @@ For examples about how to use `.env` files see the examples section.
 | `REQ_ENCODING`       | Sets the default encoding for the request body.                      | `none`, `base64`                                                      |
 | `REQ_BODY_PREFIX`    | Sets the default prefix to attach to the body (after encoding).      | Any string (attached as raw bytes).                                   |
 | `REQ_HEADERS`        | Sets the file to find headers in.                                    | Any filename (see Header Files)                                       |
+| `REQ_SOCKET_PORT`    | Sets the port of `req socket`                                        | Any port that the user has permissions to bind to.                    |
+| `REQ_SOCKET_RESPONSE_CODE` | Sets the response code on the socket that all requests will be given. | Any integer representing a valid HTTP response code.           |
+| `REQ_SOCKET_RESPONSE_MODE` | Sets the default response mode (`--response-mode`)             | `literal` or `talkback` (default is `talkback`).                      |
+| `REQ_SOCKET_RESPONSE_LITERAL` | Sets the actual literal if `--response-mode` is `literal`   | Any string                                                            |
 
 # Examples
 ## Simple Requests
@@ -114,6 +118,27 @@ req put # Run a PUT request with myrequest.json as the body to https://myproject
 req get google.com  # Run a GET to google
 
 req put --body none # Run a POST request to https://myproject.xyz without a body
+```
+
+## Sockets
+
+Req allows you very quickly and easily host a socket on your local machine to inspect requests or test that they look like you'd want. This is similar to [RequestB.in](https://requestb.in), but on your local machine.
+
+Note that these sockets are not meant to be webservers, and are not meant for high volumes of traffic.
+
+```sh
+
+req socket # A simple socket that will spit back to you whatever you request to it (headers, body, etc. nicely printed).
+           # It will also print all requests it receives to the terminal it is run in.
+
+req socket --response-mode talkback # The same as above.
+
+req socket --response-mode literal --response "hello world" # A socket that always responds with "hello world".
+
+req socket --response-code 404 # This socket always gives a 404
+
+req socket 8008 # Give it a port number if you don't want it to run on the default port.
+
 ```
 
 ## Other Commands
