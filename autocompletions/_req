@@ -1,0 +1,442 @@
+#compdef req
+
+_req() {
+    typeset -A opt_args
+    local ret=1
+
+    local context curcontext="$curcontext" state line
+    _arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req_commands" \
+"*:: :->Req" \
+&& ret=0
+    case $state in
+    (Req)
+        curcontext="${curcontext%:*:*}:req-command-$words[1]:"
+        case $line[1] in
+            (get)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__get_commands" \
+&& ret=0
+;;
+(post)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__post_commands" \
+&& ret=0
+;;
+(put)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__put_commands" \
+&& ret=0
+;;
+(options)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__options_commands" \
+&& ret=0
+;;
+(head)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__head_commands" \
+&& ret=0
+;;
+(trace)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__trace_commands" \
+&& ret=0
+;;
+(connect)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__connect_commands" \
+&& ret=0
+;;
+(delete)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__delete_commands" \
+&& ret=0
+;;
+(patch)
+_arguments -s -S -C \
+'-b+[Specify a file to use as the body of the request.]' \
+'--body+[Specify a file to use as the body of the request.]' \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-r+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'--max-redirects+[The maximum number of redirects to follow. Set this to -1 for infinite follows.]' \
+'*-h+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'*--header+[Specify a custom header. Overrides headers in --header-file.Use the format "Header Name" "Value"]' \
+'-f+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'--header-file+[Specify multiple headers in a file (one per line, same format as --header).Use the value '\''none'\'' to ignore the environment variable.]' \
+'*-p+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'*--print+[Explicitly decide which parts of the response to print.]: :(body headers request-headers status response-time config)' \
+'-t+[Specify the request timeout in millseconds.]' \
+'--timeout+[Specify the request timeout in millseconds.]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__patch_commands" \
+&& ret=0
+;;
+(show)
+_arguments -s -S -C \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__show_commands" \
+"*:: :->show" \
+&& ret=0
+case $state in
+    (show)
+        curcontext="${curcontext%:*:*}:req-show-command-$words[1]:"
+        case $line[1] in
+            (payload)
+_arguments -s -S -C \
+'-e+[Automatically encode the payload using this type.]: :(none base64)' \
+'--encoding+[Automatically encode the payload using this type.]: :(none base64)' \
+'--body-prefix+[Append a prefix to the request body (added after encoding if encoding was applied).]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__show__payload_commands" \
+&& ret=0
+;;
+(env)
+_arguments -s -S -C \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__show__env_commands" \
+&& ret=0
+;;
+(help)
+_arguments -s -S -C \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+(socket)
+_arguments -s -S -C \
+'-c+[The response code (as a number) you would like to send all requests.]' \
+'--response-code+[The response code (as a number) you would like to send all requests.]' \
+'-m+[The mode for responses the socket gives]: :(talkback literal)' \
+'--response-mode+[The mode for responses the socket gives]: :(talkback literal)' \
+'-r+[A literal string you would like the socket to respond with.]' \
+'--response+[A literal string you would like the socket to respond with.]' \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+"1:: :_req__socket_commands" \
+&& ret=0
+;;
+(help)
+_arguments -s -S -C \
+'-h[Prints help information]' \
+'--help[Prints help information]' \
+'-V[Prints version information]' \
+'--version[Prints version information]' \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_req_commands] )) ||
+_req_commands() {
+    local commands; commands=(
+        "get:" \
+"post:" \
+"put:" \
+"options:" \
+"head:" \
+"trace:" \
+"connect:" \
+"delete:" \
+"patch:" \
+"show:Show the specified resource." \
+"socket:Launch a socket on the given port to read incoming requests easily." \
+"help:Prints this message or the help of the given subcommand(s)" \
+"URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req commands' commands "$@"
+}
+(( $+functions[_req__connect_commands] )) ||
+_req__connect_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req connect commands' commands "$@"
+}
+(( $+functions[_req__delete_commands] )) ||
+_req__delete_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req delete commands' commands "$@"
+}
+(( $+functions[_req__show__env_commands] )) ||
+_req__show__env_commands() {
+    local commands; commands=(
+        "ENV_VARIABLE:Choose a single variable to see the value of by req name." \
+    )
+    _describe -t commands 'req show env commands' commands "$@"
+}
+(( $+functions[_req__get_commands] )) ||
+_req__get_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req get commands' commands "$@"
+}
+(( $+functions[_req__head_commands] )) ||
+_req__head_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req head commands' commands "$@"
+}
+(( $+functions[_req__help_commands] )) ||
+_req__help_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'req help commands' commands "$@"
+}
+(( $+functions[_req__show__help_commands] )) ||
+_req__show__help_commands() {
+    local commands; commands=(
+        
+    )
+    _describe -t commands 'req show help commands' commands "$@"
+}
+(( $+functions[_req__options_commands] )) ||
+_req__options_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req options commands' commands "$@"
+}
+(( $+functions[_req__patch_commands] )) ||
+_req__patch_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req patch commands' commands "$@"
+}
+(( $+functions[_req__show__payload_commands] )) ||
+_req__show__payload_commands() {
+    local commands; commands=(
+        "PAYLOAD:" \
+    )
+    _describe -t commands 'req show payload commands' commands "$@"
+}
+(( $+functions[_req__post_commands] )) ||
+_req__post_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req post commands' commands "$@"
+}
+(( $+functions[_req__put_commands] )) ||
+_req__put_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req put commands' commands "$@"
+}
+(( $+functions[_req__show_commands] )) ||
+_req__show_commands() {
+    local commands; commands=(
+        "payload:Displays how a payload would look when attached to a request. This is useful for things that will look like UTF-8 text." \
+"env:Displays the current req values from the environment. Prioritizes .env over other values." \
+"help:Prints this message or the help of the given subcommand(s)" \
+    )
+    _describe -t commands 'req show commands' commands "$@"
+}
+(( $+functions[_req__socket_commands] )) ||
+_req__socket_commands() {
+    local commands; commands=(
+        "PORT:" \
+    )
+    _describe -t commands 'req socket commands' commands "$@"
+}
+(( $+functions[_req__trace_commands] )) ||
+_req__trace_commands() {
+    local commands; commands=(
+        "URI:The URI to fire a request to." \
+    )
+    _describe -t commands 'req trace commands' commands "$@"
+}
+
+_req "$@"
