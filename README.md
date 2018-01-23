@@ -141,7 +141,7 @@ req socket 8008 # Give it a port number if you don't want it to run on the defau
 
 ```
 
-[Here's a video of it in action.](https://cf-e2.streamablevideo.com/video/mp4/2wnfs.mp4?token=1516530198-weBsLl62OBQOInv0PcnnIHtG93TxObyh9Kch1NVpqQY%3D)
+![Here's a video of it in action.](https://cf-e2.streamablevideo.com/video/mp4/2wnfs.mp4?token=1516530198-weBsLl62OBQOInv0PcnnIHtG93TxObyh9Kch1NVpqQY%3D)
 
 ## Other Commands
 
