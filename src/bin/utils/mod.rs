@@ -109,7 +109,7 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
                 .long("response").short("r")
                 .required_if("response-mode", "literal")
                 .env("REQ_SOCKET_LITERAL_RESPONSE")
-                .value_name("RESPONSE")));
+                .value_name("RESPONSE")))
 }
 
 fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
