@@ -44,8 +44,8 @@ fn get_print_options(opts: &Vec<ReqOption>) -> Vec<ReqOption> {
     let mut result: Vec<ReqOption> = Vec::new();
     for opt in opts {
         match opt {
-            &ReqOption::PRINT(ref v) => 
-                result.push(ReqOption::PRINT(v.clone())),
+            &ReqOption::Print(ref v) => 
+                result.push(ReqOption::Print(v.clone())),
             _ => {}
         }
     }
@@ -68,7 +68,7 @@ fn handle_result(res: ReqCommandResult, print_flags: Vec<ReqOption>, elapsed_mil
             print_body(&response.body);
         } else {
             print_flags.iter().for_each(|flag| {
-                if let &ReqOption::PRINT(ref v) = flag {
+                if let &ReqOption::Print(ref v) = flag {
                     match v.to_lowercase().as_str() {
                         "status" => print_response_status(&response.status),
                         "response-time" => print_response_time(elapsed_millis),

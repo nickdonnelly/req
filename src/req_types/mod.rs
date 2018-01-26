@@ -133,13 +133,13 @@ pub struct ReqHeader {
 
 #[derive(PartialEq, Debug, Clone)]
 pub enum ReqOption {
-    CUSTOM_HEADER((String, String)), 
-    PRINT(String),                        // string key contains the resource to print
-    ENCODING(Encoding),
-    FOLLOW_REDIRECTS(FollowRedirectInfo), // max redirect count, usize
-    CUSTOM_SOCKET_RESPONSE_CODE(StatusCode),
-    LITERAL_SOCKET(String),
-    CUSTOM_ENV_FILE(CustomEnvFileInfo)    // filepath
+    CustomHeader((String, String)), 
+    Print(String),                        // string key contains the resource to print
+    Encode(Encoding),
+    FollowRedirects(FollowRedirectInfo), // max redirect count, usize
+    CustomSocketResponseCode(StatusCode),
+    LiteralSocket(String),
+    CustomEnvFile(CustomEnvFileInfo)    // filepath
 }
 
 /// The trait that represents a resource of req.

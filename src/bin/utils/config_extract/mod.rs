@@ -27,7 +27,7 @@ pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
     };
 
     let cfg = if response_code != StatusCode::Ok {
-        cfg.option(ReqOption::CUSTOM_SOCKET_RESPONSE_CODE(response_code))
+        cfg.option(ReqOption::CustomSocketResponseCode(response_code))
     } else {
         cfg
     };
@@ -38,7 +38,7 @@ pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
             if val == "literal" {
                 let lit = socket_matches.value_of("literal-response").unwrap();
 
-                cfg.option(ReqOption::LITERAL_SOCKET(String::from(lit)))
+                cfg.option(ReqOption::LiteralSocket(String::from(lit)))
             } else {
                 cfg
             }
@@ -70,7 +70,6 @@ pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) ->
         (other, _) => { 
             eprintln!("Unknown subcommand '{}' for show.", other); 
             process::exit(FailureCode::ClientError.value() as i32);
-            cfg
         }
     }
 }
@@ -164,7 +163,7 @@ pub fn print_flags<'a>(print_flags: Option<Values<'a>>, cfg: ReqConfig)
         let values: Vec<&str> = print_flags.unwrap().collect();
 
         for (_, v) in values.iter().enumerate() {
-            print_options.push(ReqOption::PRINT(String::from(*v)));
+            print_options.push(ReqOption::Print(String::from(*v)));
         }
 
         cfg.options(print_options)
@@ -195,7 +194,7 @@ pub fn redirect_flag<'a>(redirect_arg: Option<&'a str>, cfg: ReqConfig)
 
         let redirect_count = redirect_count.unwrap();
 
-        cfg.option(ReqOption::FOLLOW_REDIRECTS(redirect_count))
+        cfg.option(ReqOption::FollowRedirects(redirect_count))
     } else {
         cfg
     }
@@ -256,7 +255,7 @@ pub fn payload_arg<'a>(
             }
 
             if encoding_type.is_some() {
-                cfg.option(ReqOption::ENCODING(encoding_type.unwrap()))
+                cfg.option(ReqOption::Encode(encoding_type.unwrap()))
                    .payload(payload)
             } else {
                 cfg.payload(payload)
@@ -277,7 +276,7 @@ pub fn header_flags<'a>(headers: Option<Values<'a>>, cfg: ReqConfig) -> ReqConfi
         for (i, _) in values.iter().enumerate() {
             if i % 2 == 0 {
                 header_options.push(
-                  ReqOption::CUSTOM_HEADER((String::from(values[i]), String::from(values[i+1]))));
+                  ReqOption::CustomHeader((String::from(values[i]), String::from(values[i+1]))));
             }
         }
 
@@ -319,7 +318,7 @@ pub fn header_file_flag(header_file: Option<&str>, cfg: ReqConfig) -> ReqConfig
                 let header_name = String::from(parts[0].trim());
                 let header_value = String::from(parts[1].trim());
 
-                options.push(ReqOption::CUSTOM_HEADER((header_name, header_value)));
+                options.push(ReqOption::CustomHeader((header_name, header_value)));
             }
 
             cfg.options(options)
@@ -331,7 +330,7 @@ pub fn header_file_flag(header_file: Option<&str>, cfg: ReqConfig) -> ReqConfig
 /// Encode a payload using the type given in the encoding_arg (from command line).
 pub fn encode_payload(encoding_arg: &str, mut payload: Payload) -> Payload
 {
-    use reqlib::encode::{ self, Encoder, base64 };
+    use reqlib::encode::{ self, Encoder };
 
     let encoder = match encoding_arg {
         "base64"        => encode::base64::Base64Encoder::new(),

@@ -126,8 +126,8 @@ impl Req {
         
         for option in options {
             match option {
-                ReqOption::CUSTOM_SOCKET_RESPONSE_CODE(c) => { sc = c },
-                ReqOption::LITERAL_SOCKET(literal) => { socket_type = SocketType::Literal(literal) },
+                ReqOption::CustomSocketResponseCode(c) => { sc = c },
+                ReqOption::LiteralSocket(literal) => { socket_type = SocketType::Literal(literal) },
                 _ => {}
             }
         }
@@ -188,7 +188,7 @@ impl Req {
 
         options.iter().for_each(|option| {
             match option {
-                &ReqOption::CUSTOM_HEADER(ref v) => custom_headers.push(v.clone()),
+                &ReqOption::CustomHeader(ref v) => custom_headers.push(v.clone()),
                 _ => {}
             };
         });

@@ -45,7 +45,7 @@ pub fn show_payload<'a>(cfg: ReqConfig, payload_args: &ArgMatches<'a>) -> ReqCon
     }
 
     if encoding_type.is_some() {
-        cfg.option(ReqOption::ENCODING(encoding_type.unwrap()))
+        cfg.option(ReqOption::Encode(encoding_type.unwrap()))
            .command(ReqCommand::Show(ReqResource::Body(payload)))
     } else {
         cfg.command(ReqCommand::Show(ReqResource::Body(payload)))

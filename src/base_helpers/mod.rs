@@ -3,9 +3,6 @@ pub use super::req_types::*;
 use super::encode::Encoding;
 
 use std::str::FromStr;
-use std::fmt;
-use std::fmt::{ Formatter, Display };
-use std::result;
 use std::io::Error;
 
 impl ReqConfig {
@@ -130,7 +127,7 @@ impl ReqConfig {
     {
         for opt in &self.options {
             match opt {
-                &ReqOption::FOLLOW_REDIRECTS(ref val) => {
+                &ReqOption::FollowRedirects(ref val) => {
                     if val == &(-1) || val > &0 {
                         return true;
                     }
@@ -148,8 +145,8 @@ impl ReqConfig {
 
         for val in self.options.iter_mut() {
             match val {
-                &mut ReqOption::FOLLOW_REDIRECTS(v) => {
-                    if v > 0 { *val = ReqOption::FOLLOW_REDIRECTS(v - 1); }
+                &mut ReqOption::FollowRedirects(v) => {
+                    if v > 0 { *val = ReqOption::FollowRedirects(v - 1); }
                 },
                 _ => {}
             }
