@@ -1,4 +1,4 @@
-use std::fmt::{self, Display, Error, Formatter};
+use std::fmt::{self, Display, Formatter};
 use super::*;
 use std::str;
 
@@ -113,7 +113,7 @@ impl Display for Payload {
         if utf8_decoded.is_err() {
             let mut strbuf = String::new();
             for chunk in &self.data {
-                write!(&mut strbuf, "0x{:X} ", chunk);
+                write!(&mut strbuf, "0x{:X} ", chunk).unwrap();
             }
             return write!(f, "Detected Content-Type: {}\n\
                               Print mode: Raw Bytes (space-separated hex)\n\
@@ -135,7 +135,7 @@ impl Display for ReqResponse{
         if utf8_decoded.is_err() {
             let mut strbuf = String::new();
             for chunk in &self.body {
-                write!(&mut strbuf, "{}", chunk);
+                write!(&mut strbuf, "{}", chunk).unwrap();
             }
             //return write!(f, "{:?}", &self.body);
             return write!(f, "{}", strbuf);

@@ -1,27 +1,11 @@
-use std;
-use std::sync::mpsc::{ self, Sender, Receiver };
-use std::thread;
-use std::error::Error;
-
-use futures;
 use futures::{ Future, Stream };
-use tokio_core::reactor::Core;
 use hyper;
-use hyper::{ Body, Chunk, Method, Headers, StatusCode };
-use hyper::header::ContentLength;
+use hyper::{ Body, Method, Headers, StatusCode };
 use hyper::server::{ Service, Http, Request, Response };
 use colored::*;
 
-use super::{ ReqResponse };
-
 pub struct QuickSocket {
-    service_name: String,
     socket_type: SocketType
-}
-
-#[derive(Debug)]
-struct QuickSocketError {
-    description: String
 }
 
 #[derive(PartialEq, Debug)]
@@ -37,14 +21,12 @@ impl QuickSocket {
     pub fn new(t: SocketType) -> QuickSocket
     {
         QuickSocket { 
-            service_name: String::from("echo"),
             socket_type: t
         }
     }
 
     pub fn start(self, port: usize, sc: StatusCode)
     {
-        // TODO allow this to actually switch between services.
         let mut addr = String::from("127.0.0.1:");
         addr.push_str(&format!("{}", port));
         let addr = addr.parse().unwrap();
@@ -164,18 +146,4 @@ impl Service for EchoService {
         }))
     }
 
-}
-
-impl std::fmt::Display for QuickSocketError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result
-    {
-        write!(f, "Socket Error:\n{}", &self.description)
-    }
-}
-
-impl Error for QuickSocketError {
-    fn description(&self) -> &str
-    {
-        &self.description
-    }
 }

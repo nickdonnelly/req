@@ -5,8 +5,6 @@ use tokio_core::reactor::Timeout;
 use futures::future::Either;
 use super::*;
 use std::time::Duration;
-use std::ops::Deref;
-use std::error::Error;
 
 /// Master struct for the actual requesting
 #[derive(Debug)]
@@ -107,7 +105,7 @@ impl Req {
         let mut s = String::new();
         for (k, v) in env::vars() {
             if k.starts_with("REQ_") {
-                write!(&mut s, "{}={}\n", k, v);
+                write!(&mut s, "{}={}\n", k, v).unwrap();
             }
         }
         s
@@ -116,11 +114,10 @@ impl Req {
     #[inline(always)]
     fn run_socket(self, port: usize) -> Result<ReqCommandResult>
     {
-        use std::collections::HashMap;
         use hyper::StatusCode;
         use quicksock::{ QuickSocket, SocketType };
 
-        let mut options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
+        let options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
         let mut sc = StatusCode::Ok;
         let mut socket_type = SocketType::Talkback;
         
@@ -152,7 +149,7 @@ impl Req {
             &ReqCommand::Show(ReqResource::EnvVar(ref var)) => {
                 match env::var(var) {
                     Ok(valstr) => format!("{}={}", var, valstr),
-                    Err(e) => format!("{}=<no value>", var)
+                    Err(_) => format!("{}=<no value>", var)
                 }
             },
             &ReqCommand::Show(ReqResource::Env) => Req::env_string(),
@@ -165,7 +162,7 @@ impl Req {
     #[inline(always)]
     fn run_request(self) -> Result<ReqCommandResult> {
         use hyper::{ Request, Uri };
-        use futures::Future;
+        use futures::{ Future, Stream };
  
         let err = self.validate_request_config();
         if err.is_some() {
@@ -177,7 +174,7 @@ impl Req {
         let timeout = self.cfg.timeout.clone().unwrap();
         let payload = self.cfg.payload.clone();
         let uri = Uri::from_str(host_str.as_str()).unwrap();
-        let mut options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
+        let options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
         let mut custom_headers: Vec<(String, String)> = Vec::new();
 
         let payload = if payload.is_some() {
@@ -194,7 +191,7 @@ impl Req {
         });
 
         
-        let mut core = Core::new();
+        let core = Core::new();
         if core.is_err() {
             return Err(ReqError { 
                 exit_code: FailureCode::IOError, 
@@ -221,13 +218,13 @@ impl Req {
         let work = client.request(request).select2(timeout)
             .then(|res| match res{
                 Ok(Either::A((res, _))) => Ok(res), // request sucecss
-                Ok(Either::B((timeout, _))) => Err(ReqError {
+                Ok(Either::B((_timeout, _))) => Err(ReqError {
                         exit_code: FailureCode::Timeout,
                         description: "The request timed out."
                     }),
                 Err(Either::A((res_err, _))) => 
                     Err(Req::match_hyper_error(Some(res_err))), // request error
-                Err(Either::B((timeout_err, _))) => Err(ReqError{
+                Err(Either::B((_timeout_err, _))) => Err(ReqError{
                         exit_code: FailureCode::IOError,
                         description: "Something went wrong measuring the timeout...Doh!"
                     })
@@ -253,7 +250,7 @@ impl Req {
             // NOTE: This must be done with the reactor core!
             // Without it this will block indefinitely if the stream contains more information
             // than can be retrieved with the initial poll.
-            let mut raw_response_body = core.run(response.body().concat2());
+            let raw_response_body = core.run(response.body().concat2());
 
             if raw_response_body.is_err() {
                 return Err(ReqError {
@@ -388,14 +385,5 @@ impl Req {
         headers.iter().for_each(|header|{
             req.headers_mut().set_raw(header.0.clone(), header.1.clone());
         });
-    }
-
-    fn resolve_timeout(&self, timeout: Option<usize>) -> Option<Duration>
-    {
-        if timeout.is_none() {
-            None
-        } else {
-            Some(Duration::from_millis(timeout.unwrap() as u64))
-        }
     }
 }

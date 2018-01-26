@@ -12,7 +12,6 @@ use colored::*;
 
 use std::str;
 use std::process;
-use std::io::Write;
 
 mod utils;
 
@@ -90,7 +89,7 @@ fn print_show_command(res: ReqCommandResult) {
     match res.from_config.command {
         ReqCommand::Show(ReqResource::Body(_)) => 
             print_with_title("Payload looks like:", res.to_show.unwrap()),
-        ReqCommand::Show(ReqResource::EnvVar(v)) => {
+        ReqCommand::Show(ReqResource::EnvVar(_v)) => {
             println!("{}", res.to_show.unwrap());
         },
         ReqCommand::Show(ReqResource::Env) => {

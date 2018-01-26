@@ -241,7 +241,7 @@ pub fn payload_arg<'a>(
             eprintln!("Could not open {}", filename);
             process::exit(FailureCode::IOError.value() as i32);
         } else {
-            let mut payload = payload.unwrap();
+            let payload = payload.unwrap();
             
             let (mut payload, encoding_type) = match encoding_arg {
                 Some(v) => {

@@ -141,8 +141,6 @@ impl ReqConfig {
 
     pub fn reduce_redirect_count(&mut self)
     {
-        let new_opts: Vec<ReqOption> = Vec::new();
-
         for val in self.options.iter_mut() {
             match val {
                 &mut ReqOption::FollowRedirects(v) => {
@@ -236,7 +234,7 @@ impl Payload {
             let mut file = try_file.unwrap();
             let mut buf: Vec<u8> = Vec::new();
 
-            file.read_to_end(&mut buf);
+            file.read_to_end(&mut buf)?;
             
             Ok(Payload {
                 data: buf,

@@ -1,15 +1,12 @@
 use hyper::{ self, Method, StatusCode };
 use hyper::header::HeaderView;
-use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
-use hyper::{ Body, Client };
-use futures::Stream;
+use hyper::Client;
 use tokio_core::reactor::Core;
 
 use super::encode::Encoding;
 use super::options::*;
 
-use std::io::{self, Write};
 use std::result;
 use std::str::FromStr;
 

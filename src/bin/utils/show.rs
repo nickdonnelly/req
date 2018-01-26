@@ -7,13 +7,12 @@
 
 use reqlib::{ ReqConfig, Payload, FailureCode, ReqResource, ReqCommand, ReqOption };
 use super::super::encode::Encoding;
-use clap::{ Values, ArgMatches };
+use clap::{ ArgMatches };
 use std::process;
 
 pub fn show_payload<'a>(cfg: ReqConfig, payload_args: &ArgMatches<'a>) -> ReqConfig
 {
-    // URGENT TODO: Encoding in this block - the flag is already present for this command.
-    let mut payload = match payload_args.value_of("payload") {
+    let payload = match payload_args.value_of("payload") {
         Some(filename) => {
             let payload = Payload::from_file(filename);
 
