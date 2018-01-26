@@ -135,8 +135,9 @@ fn show_subcommands<'a, 'b>() -> Vec<App<'a, 'b>>
                 Prioritizes .env over other values.")
         .arg(Arg::with_name("env_variable")
             .help("Choose a single variable to see the value of by req name.")
-            // TODO: update these to be current (add extras)
-            .possible_values(&["all", "uri", "timeout", "http_method", "max_redirects", "payload_file"])
+            .possible_values(&["all", "uri", "timeout", "http_method", "max_redirects", "payload_file",
+                               "body_prefix", "encoding", "socket_port", "socket_response_code",
+                               "socket_response_mode", "socket_response_literal", "headers"])
             .required(false)
             .takes_value(true)
             .value_name("VARIABLE")

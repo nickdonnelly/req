@@ -64,6 +64,13 @@ pub fn show_env<'a>(cfg: ReqConfig, env_args: &ArgMatches<'a>) -> ReqConfig
                 "timeout" => ReqResource::EnvVar(String::from("REQ_TIMEOUT")),
                 "http_method" => ReqResource::EnvVar(String::from("REQ_HTTP_METHOD")),
                 "max_redirects" => ReqResource::EnvVar(String::from("REQ_MAX_REDIRECTS")),
+                "body_prefix" => ReqResource::EnvVar(String::from("REQ_BODY_PREFIX")),
+                "encoding" => ReqResource::EnvVar(String::from("REQ_ENCODING")),
+                "socket_port" => ReqResource::EnvVar(String::from("REQ_SOCKET_PORT")),
+                "socket_response_code" => ReqResource::EnvVar(String::from("REQ_SOCKET_CODE")),
+                "socket_response_mode" => ReqResource::EnvVar(String::from("REQ_SOCKET_MODE")),
+                "socket_response_literal" => ReqResource::EnvVar(String::from("REQ_SOCKET_RESPONSE_LITERAL")),
+                "headers" => ReqResource::EnvVar(String::from("REQ_HEADERS")),
                 "payload_file" => ReqResource::EnvVar(String::from("REQ_PAYLOAD_FILE")),
                 "all" | _ => ReqResource::Env,
             };

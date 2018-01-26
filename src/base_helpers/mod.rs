@@ -239,7 +239,7 @@ impl Payload {
             Ok(Payload {
                 data: buf,
                 content_type: ctt,
-                encoding: Encoding::NoEncoding // TODO: Detect if the file is already encoded
+                encoding: Encoding::NoEncoding
             })
         } else {
             Err(try_file.err().unwrap())
