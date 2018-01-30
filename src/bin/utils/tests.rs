@@ -87,7 +87,7 @@ fn test_one_print_flag()
     purge_env();
     let config = config_from_str("req put google.com -p config");
 
-    assert!(config.options.contains(&ReqOption::PRINT(String::from("config"))));
+    assert!(config.options.contains(&ReqOption::Print(String::from("config"))));
 }
 
 #[test]
@@ -96,9 +96,9 @@ fn test_many_print_flags()
     purge_env();
     let config = config_from_str("req put --print request-headers google.com -p config -p headers");
 
-    assert!(config.options.contains(&ReqOption::PRINT(String::from("config"))));
-    assert!(config.options.contains(&ReqOption::PRINT(String::from("request-headers"))));
-    assert!(config.options.contains(&ReqOption::PRINT(String::from("headers"))));
+    assert!(config.options.contains(&ReqOption::Print(String::from("config"))));
+    assert!(config.options.contains(&ReqOption::Print(String::from("request-headers"))));
+    assert!(config.options.contains(&ReqOption::Print(String::from("headers"))));
 }
 
 #[test]
