@@ -249,6 +249,14 @@ pub struct ReqCommandResult {
 }
 
 impl ReqHeader {
+    pub fn new(name: &str, value: &str) -> ReqHeader
+    {
+        ReqHeader {
+            name: String::from(name),
+            value: String::from(value)
+        }
+    }
+
     pub fn from_header_view(hv: &HeaderView) -> ReqHeader
     {
         ReqHeader {

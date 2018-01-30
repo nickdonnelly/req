@@ -49,6 +49,7 @@ fn build_app<'a, 'b>() -> App<'a, 'b>
             .env("REQ_URI")
             .value_name("URI"))
         .arg(payload_arg())
+        .arg(extract_assets_arg())
         .arg(encoding_flag())
         .arg(body_prefix_flag())
         .arg(redirect_flag())
@@ -153,6 +154,7 @@ fn request_subcommand_args<'a, 'b>() -> Vec<Arg<'a, 'b>>
     result.push(uri_arg());
     result.push(payload_arg());
     result.push(encoding_flag());
+    result.push(extract_assets_arg());
     result.push(body_prefix_flag());
     result.push(redirect_flag());
     result.push(header_flag());
@@ -186,6 +188,17 @@ fn header_file_flag<'a, 'b>() -> Arg<'a, 'b>
         .multiple(false)
         .env("REQ_HEADERS")
         .value_name("FILE")
+}
+
+fn extract_assets_arg<'a, 'b>() -> Arg<'a, 'b> 
+{
+    Arg::with_name("extract-assets")
+        .help("Extract all of the assets from tags in an HTML document.")
+        .short("a")
+        .long("extract-assets")
+        .takes_value(true)
+        .multiple(false)
+        .value_name("OUT_DIRECTORY")
 }
 
 fn payload_arg<'a, 'b>() -> Arg<'a, 'b>
