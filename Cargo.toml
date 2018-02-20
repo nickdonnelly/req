@@ -13,6 +13,7 @@ clap = "2"
 stopwatch = "0.0.7"
 colored = "1.6"
 bytes = "0.4"
+regex = "0.2"
 
 [lib]
 name = "reqlib"
