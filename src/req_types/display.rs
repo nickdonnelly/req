@@ -78,7 +78,8 @@ impl Display for ReqConfig {
             },
             &ReqCommand::Show(ref resource) => format!("Show {:?}", resource),
             &ReqCommand::Socket(ref port) => format!("Socket on {}", port),
-            &ReqCommand::CleanEnvironment => format!("Clean Environment")
+            &ReqCommand::CleanEnvironment => format!("Clean Environment"),
+            &ReqCommand::ExtractAssets(ref v) => format!("Extract assets to {}", v)
         };
 
         write!(f, "{}", command_string)

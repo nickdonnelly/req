@@ -197,7 +197,8 @@ pub enum ReqCommand {
     Request(RequestMethod),
     CleanEnvironment,
     Socket(usize), // port
-    Show(ReqResource)
+    ExtractAssets(String), // directory
+    Show(ReqResource),
 }
 
 impl ReqCommand {

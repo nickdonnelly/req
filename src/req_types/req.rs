@@ -84,6 +84,7 @@ impl Req {
             Show(_) => self.run_show(),
             Socket(port) => self.run_socket(port),
             CleanEnvironment => self.clean_env(),
+            ExtractAssets(_) => self.run_extract_assets()
         };
         if fres.is_err() {
             return Err(fres.err().unwrap());
@@ -157,6 +158,19 @@ impl Req {
         };
 
         Ok(ReqCommandResult::new_to_show(to_show, self))
+    }
+
+    #[inline(always)]
+    fn run_extract_assets(self) -> Result<ReqCommandResult>
+    {
+        let host = self.cfg.host.clone();
+        let i: usize = 0;
+        let directory =  if let ReqCommand::ExtractAssets(d) = self.cfg.command {
+            d.clone()
+        } else { 
+            String::new()
+        };
+        Ok(ReqCommandResult::new_stub())
     }
 
     #[inline(always)]
