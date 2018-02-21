@@ -13,16 +13,14 @@ pub enum ExtractionType {
 #[derive(Debug)]
 pub struct Extraction {
     pub resource_type: ExtractionType,
-    pub filename: String,
     pub extracted_from: Option<String>
 }
 
 impl Extraction {
-    pub fn new(t: ExtractionType, filename: String, from: Option<String>) -> Self
+    pub fn new(t: ExtractionType, from: Option<String>) -> Self
     {
         Extraction {
             resource_type: t,
-            filename: filename,
             extracted_from: from 
         }
     }
@@ -31,6 +29,8 @@ impl Extraction {
 
 
 /// Parses the document in the response for scripts and external resources.
+// TODO: Also extract resources directly from tags. This will require a
+// rudimentary XML parser.
 pub fn extract_resource_list(response: &[u8]) 
     -> Result<Vec<Extraction>, ExtractionError>
 {
@@ -50,7 +50,6 @@ pub fn extract_resource_list(response: &[u8])
     for capture in extraction_regex.captures_iter(body_s) {
         let f = String::from(&capture["url"]);
         let e = Extraction::new(ExtractionType::RemoteFetch,
-                                String::new(),
                                 Some(f));
         matches.push(e);
     }
