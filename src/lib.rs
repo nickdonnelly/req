@@ -6,10 +6,11 @@ extern crate futures;
 extern crate bytes;
 extern crate regex;
 extern crate colored; // for socket.
+extern crate rand;
 
 mod base_helpers;
 mod req_types;
-mod asset_extract;
+pub mod asset_extract;
 pub mod encode;
 pub mod options;
 pub mod quicksock;

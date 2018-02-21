@@ -24,6 +24,11 @@ impl Extraction {
             extracted_from: from 
         }
     }
+
+    pub fn uri(&self) -> Option<String>
+    {
+        self.extracted_from.clone()
+    }
 }
 
 

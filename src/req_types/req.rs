@@ -163,13 +163,71 @@ impl Req {
     #[inline(always)]
     fn run_extract_assets(self) -> Result<ReqCommandResult>
     {
-        let host = self.cfg.host.clone();
+        use super::super::asset_extract::{ self, Extraction, ExtractionType };
+        use rand::{self, Rng};
+        use std::fs;
+
+        let host = self.cfg.host.clone().unwrap();
         let i: usize = 0;
         let directory =  if let ReqCommand::ExtractAssets(d) = self.cfg.command {
             d.clone()
         } else { 
-            String::new()
+            String::from(".")
         };
+
+        let core = Core::new();
+        if core.is_err() {
+            return Err(ReqError { 
+                exit_code: FailureCode::IOError, 
+                description: "Unable to fetch event loop."});
+        }
+        let config = ReqConfig::new().global_defaults()
+                .command(ReqCommand::Request(RequestMethod::Get))
+                .host(host.clone());
+                
+        let initial_request = Req::new_from_cfg(config).unwrap();
+        let response = initial_request.run();
+
+        if response.is_err() {
+            return Err(response.err().unwrap());
+        }
+
+        let response_body = response.unwrap().response.unwrap().body;
+        let extractions = asset_extract::extract_resource_list(&response_body);
+        fs::create_dir_all(directory.clone());
+
+        for extraction in extractions.unwrap() {
+            let uri = extraction.uri().unwrap();
+            let uri = if uri.starts_with("http") {
+                uri
+            } else {
+                let mut x = host.clone();
+                x += "/";
+                x += &uri;
+                x
+            };
+
+            let config = ReqConfig::new().global_defaults()
+                .command(ReqCommand::Request(RequestMethod::Get))
+                .host(uri);
+            let res = Req::new_from_cfg(config).unwrap().run().unwrap().response.unwrap();
+            let mut saveLoc = directory.clone() + "/";
+            for header in res.headers {
+                if header.name == "Content-Disposition" {
+                    saveLoc += header.name.as_str();
+                    break;
+                }
+            }
+
+            if saveLoc.ends_with("/") {
+                let mut random_chars: String = rand::thread_rng()
+                    .gen_ascii_chars()
+                    .take(10)
+                    .collect();
+                saveLoc += random_chars.as_str();
+            }
+        }
+        
         Ok(ReqCommandResult::new_stub())
     }
 
