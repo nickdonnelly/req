@@ -31,6 +31,7 @@ fn process_arg_matches<'a>(matches: ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
         ("delete", Some(request))  => config_extract::setup_request("delete", request, cfg),
         ("show", Some(show))       => config_extract::setup_show_resource(show, cfg),
         ("socket", Some(sock))     => config_extract::setup_socket(sock, cfg),
+        ("extract", Some(ext))     => config_extract::setup_extract(ext, cfg),
         _                          => config_extract::setup_no_subcommand(&matches, cfg)
     }
 }

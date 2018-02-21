@@ -165,7 +165,8 @@ impl Req {
     {
         use super::super::asset_extract::{ self, Extraction, ExtractionType };
         use rand::{self, Rng};
-        use std::fs;
+        use std::fs::{ self };
+        use std::io::Write;
 
         let host = self.cfg.host.clone().unwrap();
         let i: usize = 0;
@@ -226,6 +227,9 @@ impl Req {
                     .collect();
                 saveLoc += random_chars.as_str();
             }
+
+            let mut file = fs::File::create(saveLoc).unwrap();
+            file.write_all(&res.body).unwrap();
         }
         
         Ok(ReqCommandResult::new_stub())

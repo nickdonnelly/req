@@ -74,6 +74,14 @@ pub fn setup_show_resource<'a>(show_matches: &ArgMatches<'a>, cfg: ReqConfig) ->
     }
 }
 
+pub fn setup_extract<'a>(extract_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
+{
+    let dir = String::from(extract_matches.value_of("directory").unwrap());
+    let uri = String::from(extract_matches.value_of("uri").unwrap());
+
+    cfg.command(ReqCommand::ExtractAssets(dir)).host(uri)
+}
+
 pub fn setup_request<'a>(meth: &str, request_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqConfig
 {
     // Add the command
