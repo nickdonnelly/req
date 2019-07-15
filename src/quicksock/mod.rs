@@ -1,7 +1,5 @@
-use futures::{ Future, Stream };
-use hyper;
-use hyper::{ Body, Method, Headers, StatusCode };
-use hyper::server::{ Service, Http, Request, Response };
+use hyper::{ self, Body, Response, Server, StatusCode, HeaderMap };
+use hyper::service::service_fn_ok;
 use colored::*;
 
 pub struct QuickSocket {
@@ -15,7 +13,6 @@ pub enum SocketType {
 }
 
 impl QuickSocket {
-
     /// Returns an instance of QuickSocket ready to open on 
     /// @param t The type of socket you'd like (talkback or literal)
     pub fn new(t: SocketType) -> QuickSocket
@@ -25,11 +22,25 @@ impl QuickSocket {
         }
     }
 
-    pub fn start(self, port: usize, sc: StatusCode)
+    pub fn start(self, port: u16, sc: StatusCode)
     {
-        let mut addr = String::from("127.0.0.1:");
-        addr.push_str(&format!("{}", port));
-        let addr = addr.parse().unwrap();
+        let mut addr = ([127, 0, 0, 1], port).into();
+
+        if let SocketType::Literal(lit) = self.socket_type {
+            let mk_srv = || {
+                service_fn_ok(|_req| {
+                    Response::new(Body::from(lit))
+                })
+            };
+
+            let server = Server::bind(&addr)
+                .serve(mk_srv);
+
+            hyper::rt::run(server.map_err(|err| {
+                eprintln!("Problem with hyper server: {}", err);
+            }));
+        } 
+        /*
         if let SocketType::Literal(lit) = self.socket_type {
             let server = Http::new().keep_alive(false).bind(&addr, move || Ok(OkService{
                 status_code: sc,
@@ -42,13 +53,15 @@ impl QuickSocket {
             })).unwrap();
             server.run().unwrap()
         }
+        */
     }
 
 }
 
 
 /// Return a body that is the pretty version of the given request.
-pub fn pretty_print(headers: Headers, req_meth: Method, req_path: String) -> String 
+/*
+pub fn pretty_print(headers: HeaderMap, req_meth: Method, req_path: String) -> String 
 {
     let mut headerstring = String::new();
     let methstr = format!("{} {}\n", req_meth, req_path);
@@ -64,6 +77,7 @@ pub fn pretty_print(headers: Headers, req_meth: Method, req_path: String) -> Str
     headerstring.push_str(format!("{}", "---Body---\n".red()).as_str());
     headerstring
 }
+*/
 
 /// Struct used to respond to requests with their body
 struct EchoService {
@@ -74,76 +88,4 @@ struct EchoService {
 struct OkService {
     status_code: StatusCode,
     phrase: String
-}
-
-impl Service for OkService {
-    type Request = Request;
-    type Error = hyper::Error;
-    type Response = Response;
-
-    type Future = Box<Future<Item=Self::Response, Error=Self::Error>>;
-
-    fn call(&self, req: Request) -> Self::Future 
-    {
-        let headers = req.headers().clone();
-        let method = req.method().clone();
-        let uri = req.uri().clone();
-        let path = String::from(format!("{}", uri).as_str());
-        let status = self.status_code.clone();
-        let phrase = self.phrase.clone();
-        let mut response_body_start = pretty_print(headers, method, path);
-
-        Box::new(req.body().concat2().map(move |body_chunk|{
-            let fbody = body_chunk.iter().cloned().collect::<Vec<u8>>();
-            let blen = fbody.len();
-            let body_string = String::from_utf8(fbody);
-            let body_string = if body_string.is_err() {
-                format!("<{} {}>", blen.to_string().green().bold(), " bytes".green().bold())
-            } else {
-                format!("{}", body_string.unwrap().italic())
-            };
-
-            response_body_start.push_str(&body_string);
-            response_body_start.push_str(format!("{}", "\n---End Body---\n\n".red()).as_str());
-            println!("{}", response_body_start);
-            let body = Body::from(phrase);
-            Response::new().with_status(status).with_body(body)
-        }))
-    }
-}
-
-impl Service for EchoService {
-    type Request = Request;
-    type Error = hyper::Error;
-    type Response = Response;
-
-    type Future = Box<Future<Item=Self::Response, Error=Self::Error>>;
-
-    fn call(&self, req: Request) -> Self::Future
-    {
-        let headers = req.headers().clone();
-        let method = req.method().clone();
-        let uri = req.uri().clone();
-        let path = String::from(format!("{}", uri).as_str());
-        let status = self.status_code.clone();
-        let mut response_body_start = pretty_print(headers, method, path);
-        Box::new(req.body().concat2().map(move |body_chunk|{
-            let fbody = body_chunk.iter().cloned().collect::<Vec<u8>>();
-            let blen = fbody.len();
-            let body_string = String::from_utf8(fbody);
-            let body_string = if body_string.is_err() {
-                format!("<{} {}>", blen.to_string().green().bold(), " bytes".green().bold())
-            } else {
-                format!("{}", body_string.unwrap().italic())
-            };
-
-            response_body_start.push_str(&body_string);
-            response_body_start.push_str(format!("{}", "\n---End Body---\n\n".red()).as_str());
-            println!("{}", response_body_start);
-            Body::from(response_body_start)
-        }).map(move |final_body| {
-            Response::new().with_status(status).with_body(final_body)
-        }))
-    }
-
 }

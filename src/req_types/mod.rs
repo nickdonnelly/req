@@ -1,5 +1,4 @@
 use hyper::{ self, Method, StatusCode };
-use hyper::header::HeaderView;
 use hyper_tls::HttpsConnector;
 use hyper::Client;
 use tokio_core::reactor::Core;
@@ -159,15 +158,15 @@ pub enum RequestMethod {
 impl RequestMethod {
     pub fn as_hyper_method(&self) -> Method {
         match self {
-            &RequestMethod::Get     => Method::Get,
-            &RequestMethod::Head    => Method::Head,
-            &RequestMethod::Put     => Method::Put,
-            &RequestMethod::Post    => Method::Post,
-            &RequestMethod::Delete  => Method::Delete,
-            &RequestMethod::Options => Method::Options,
-            &RequestMethod::Patch   => Method::Patch,
-            &RequestMethod::Connect => Method::Connect,
-            &RequestMethod::Trace   => Method::Trace,
+            &RequestMethod::Get     => Method::GET,
+            &RequestMethod::Head    => Method::HEAD,
+            &RequestMethod::Put     => Method::PUT,
+            &RequestMethod::Post    => Method::POST,
+            &RequestMethod::Delete  => Method::DELETE,
+            &RequestMethod::Options => Method::OPTIONS,
+            &RequestMethod::Patch   => Method::PATCH,
+            &RequestMethod::Connect => Method::CONNECT,
+            &RequestMethod::Trace   => Method::TRACE,
         }
     }
 }
@@ -196,7 +195,7 @@ impl FromStr for RequestMethod {
 pub enum ReqCommand {
     Request(RequestMethod),
     CleanEnvironment,
-    Socket(usize), // port
+    Socket(u16), // port
     ExtractAssets(String), // directory
     Show(ReqResource),
 }
@@ -255,14 +254,6 @@ impl ReqHeader {
         ReqHeader {
             name: String::from(name),
             value: String::from(value)
-        }
-    }
-
-    pub fn from_header_view(hv: &HeaderView) -> ReqHeader
-    {
-        ReqHeader {
-            name: String::from(hv.name()),
-            value: hv.value_string()
         }
     }
 }

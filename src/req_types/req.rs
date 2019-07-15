@@ -1,8 +1,10 @@
-use hyper::client::Request;
+use hyper::Request;
 use hyper::error;
 use hyper::Uri;
+use hyper::header::HeaderValue;
 use tokio_core::reactor::Timeout;
-use futures::future::Either;
+use futures::future::{ Future, Either };
+use futures::stream::Stream;
 use super::*;
 use std::time::Duration;
 
@@ -113,13 +115,12 @@ impl Req {
     }
 
     #[inline(always)]
-    fn run_socket(self, port: usize) -> Result<ReqCommandResult>
+    fn run_socket(self, port: u16) -> Result<ReqCommandResult>
     {
-        use hyper::StatusCode;
         use quicksock::{ QuickSocket, SocketType };
 
         let options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
-        let mut sc = StatusCode::Ok;
+        let mut sc = StatusCode::OK;
         let mut socket_type = SocketType::Talkback;
         
         for option in options {
@@ -163,8 +164,8 @@ impl Req {
     #[inline(always)]
     fn run_extract_assets(self) -> Result<ReqCommandResult>
     {
-        use super::super::asset_extract::{ self, Extraction, ExtractionType };
-        use rand::{self, Rng};
+        use super::super::asset_extract;
+        use rand::Rng;
         use std::fs::{ self };
         use std::io::Write;
 
@@ -237,8 +238,7 @@ impl Req {
 
     #[inline(always)]
     fn run_request(self) -> Result<ReqCommandResult> {
-        use hyper::{ Request, Uri };
-        use futures::{ Future, Stream };
+        use hyper::Uri;
  
         let err = self.validate_request_config();
         if err.is_some() {
@@ -274,7 +274,8 @@ impl Req {
                 description: "Unable to fetch event loop."});
         }
  
-        let mut request = Request::new(meth, uri); 
+        let mut request = Request::new(uri); 
+        *request.method_mut() = meth;
         let mut request_headers: Vec<ReqHeader> = Vec::new();
 
         Req::add_payload(&mut request, payload);
@@ -285,10 +286,10 @@ impl Req {
         
         let mut core = core.unwrap();
         let handle = core.handle();
-        let client = Client::configure()
-            .connector(HttpsConnector::new(4, &handle).unwrap())
+        let client = Client::builder()
             .keep_alive(false)
-            .build(&handle);
+            .set_host(true)
+            .build::<HttpsConnector<hyper::client::HttpConnector>, hyper::Body>(HttpsConnector::new(4).unwrap());
 
         let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
         let work = client.request(request).select2(timeout)
@@ -315,8 +316,10 @@ impl Req {
             let mut response_headers: Vec<ReqHeader> = Vec::new();
             
             // == Extract the headers ==
-            response.headers().iter().for_each(|header_view| {
-                response_headers.push(ReqHeader::from_header_view(&header_view));
+            response.headers().iter().for_each(|(key, value)| {
+                let key = key.as_str();
+                let value = value.to_str().unwrap();
+                response_headers.push(ReqHeader::new(key, value));
             });
 
             // == Extract the response status ==
@@ -379,69 +382,75 @@ impl Req {
                 description: "Silent failure! No error returned!"
             }
         } else {
-            match err.unwrap() {
-              Error::Header => ReqError { 
-                  exit_code: FailureCode::IOError, 
-                  description: "Invalid header." 
-              },
-              Error::Io(e) => {
-                  //let erstr = format!("{}", e.description());
-                  let estr =  match e.kind() {
-                      ErrorKind::ConnectionRefused => "Connection refused.",
-                      ErrorKind::ConnectionReset => "Connection reset.",
-                      ErrorKind::ConnectionAborted => "Connection aborted.",
-                      ErrorKind::NotConnected => "Connection failed.",
-                      ErrorKind::TimedOut => "IO timed out.",
-                      ErrorKind::PermissionDenied => "Permission denied.",
-                      ErrorKind::Interrupted => "Interrupted.",
-                      _ => "Unknown error."
-                  };
-                  ReqError { 
-                      exit_code: FailureCode::IOError, 
-                      description: estr
-                  }
-              },
-              Error::Timeout => {
-                  ReqError {
-                      exit_code: FailureCode::Timeout,
-                      description: "Connection timed out."
-                  }
-              },
-              Error::Status => {
-                  ReqError {
-                      exit_code: FailureCode::IOError,
-                      description: "Bad HTTP status."
-                  }
-              },
-              _ => ReqError { exit_code: FailureCode::ClientError, description: "Unknown error." }
+            let err = err.unwrap();
+            if err.is_parse() {
+                return ReqError {
+                    exit_code: FailureCode::IOError,
+                    description: "Hyper parse error."
+                };
+            }
+
+            if err.is_closed() || err.is_incomplete_message() {
+                return ReqError {
+                    exit_code: FailureCode::IOError,
+                    description: "Connection reset."
+                };
+            }
+
+            if err.is_canceled() {
+                return ReqError {
+                    exit_code: FailureCode::IOError,
+                    description: "Connection closed."
+                };
+            }
+
+            if err.is_user() {
+                return ReqError {
+                    exit_code: FailureCode::ClientError,
+                    description: "Unknown error."
+                };
+            }
+
+            let desc = if let Some(e) = err.into_cause() {
+                format!("{}", e).as_str()
+            } else {
+                "Unknown error."
+            };
+
+            ReqError {
+                exit_code: FailureCode::ClientError,
+                description: desc
             }
         }
     }
 
-    fn add_payload(
-        req: &mut Request,
+    fn add_payload<S>(
+        req: &mut Request<S>,
         payload: Payload)
     {
         let ctt = payload.content_type().clone();
         if let ReqContentType::Empty = ctt {
-            req.headers_mut().set_raw("Content-Length", "0");
+            req.headers_mut().insert("Content-Length", HeaderValue::from_str("0").unwrap());
         }
 
-        req.headers_mut().set_raw("Content-Type", payload.content_type_str());
-        req.headers_mut().set_raw("Content-Length", format!("{}", payload.data.len()));
+        req.headers_mut().insert("Content-Type", 
+                                 HeaderValue::from_str(payload.content_type_str()).unwrap());
+        req.headers_mut().insert("Content-Length", 
+                                 HeaderValue::from_str(
+                                     format!("{}", payload.data.len()).as_str()).unwrap());
         let data = payload.data();
         req.set_body(data);
     }
 
     /// Converts and copies all of the headers from the request to the given vector.
     /// Used to return the headers from the request with the `ReqCommandResult`.
-    fn copy_request_headers(
-        req: &mut Request,
+    fn copy_request_headers<S>(
+        req: &mut Request<S>,
         copy_to: &mut Vec<ReqHeader>)
     {
         req.headers().iter().for_each(|header|{
-            let name = String::from(header.name());
-            let value = header.value_string();
+            let name = String::from(header.0.as_str());
+            let value = String::from(header.1.to_str().unwrap());
             let r_header = ReqHeader{
                 name: name,
                 value: value
@@ -454,12 +463,13 @@ impl Req {
 
 
     /// Adds all headers in `headers` to the request.
-    fn add_request_headers(
-        req: &mut Request, 
+    fn add_request_headers<S>(
+        req: &mut Request<S>,
         headers: &mut Vec<(String, String)>)
     {
         headers.iter().for_each(|header|{
-            req.headers_mut().set_raw(header.0.clone(), header.1.clone());
+            req.headers_mut().insert(header.0.clone().as_str(),
+                                     HeaderValue::from_str(header.1.clone()).unwrap());
         });
     }
 }
