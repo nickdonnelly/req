@@ -1,7 +1,6 @@
 use std;
 use std::str;
 use regex::Regex;
-use super::{ ReqHeader, ReqResponse };
 
 /// Denotes the type of extractable resource
 #[derive(Debug)]
@@ -41,7 +40,6 @@ pub fn extract_resource_list(response: &[u8])
 {
     // Grabs src="link" and href="link" and put link into a "url" group
     let extraction_regex = Regex::new(r#"((src)|(href))="(?P<url>[^"]*)"{1}"#).unwrap();
-    let html_content_type = ReqHeader::new("Content-Type", "text/html");
 
     let body_s = match str::from_utf8(response) {
         Ok(v) => v,

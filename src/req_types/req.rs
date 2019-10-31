@@ -1,7 +1,7 @@
 use hyper::Request;
 use hyper::error;
 use hyper::Uri;
-use hyper::header::HeaderValue;
+use hyper::http::request::Builder;
 use tokio_core::reactor::Timeout;
 use futures::future::{ Future, Either };
 use futures::stream::Stream;
@@ -59,8 +59,8 @@ impl Req {
                         let redirect_place = redirect_place.unwrap();
                         let redirect_place = if redirect_place.starts_with("/") {
                             let hyper_uri = config.host.clone().unwrap().parse::<Uri>().unwrap();
-                            let scheme = hyper_uri.scheme().unwrap_or("http://");
-                            let authority = hyper_uri.authority().unwrap();
+                            let scheme = hyper_uri.scheme_str().unwrap_or("http://");
+                            let authority = hyper_uri.authority_part().unwrap().as_str();
 
                             format!("{}{}{}", scheme, authority, redirect_place)
                         } else {
@@ -120,12 +120,10 @@ impl Req {
         use quicksock::{ QuickSocket, SocketType };
 
         let options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
-        let mut sc = StatusCode::OK;
         let mut socket_type = SocketType::Talkback;
         
         for option in options {
             match option {
-                ReqOption::CustomSocketResponseCode(c) => { sc = c },
                 ReqOption::LiteralSocket(literal) => { socket_type = SocketType::Literal(literal) },
                 _ => {}
             }
@@ -133,7 +131,7 @@ impl Req {
 
         let qs = QuickSocket::new(socket_type);
         println!("Starting socket on  127.0.0.1:{}", &port);
-        qs.start(port, sc);
+        qs.start(port);
         Ok(ReqCommandResult::new_stub()) // we never get here.
     }
 
@@ -170,7 +168,6 @@ impl Req {
         use std::io::Write;
 
         let host = self.cfg.host.clone().unwrap();
-        let i: usize = 0;
         let directory =  if let ReqCommand::ExtractAssets(d) = self.cfg.command {
             d.clone()
         } else { 
@@ -222,7 +219,7 @@ impl Req {
             }
 
             if saveLoc.ends_with("/") {
-                let mut random_chars: String = rand::thread_rng()
+                let random_chars: String = rand::thread_rng()
                     .gen_ascii_chars()
                     .take(10)
                     .collect();
@@ -238,8 +235,6 @@ impl Req {
 
     #[inline(always)]
     fn run_request(self) -> Result<ReqCommandResult> {
-        use hyper::Uri;
- 
         let err = self.validate_request_config();
         if err.is_some() {
             return Err(err.unwrap());
@@ -274,15 +269,15 @@ impl Req {
                 description: "Unable to fetch event loop."});
         }
  
-        let mut request = Request::new(uri); 
-        *request.method_mut() = meth;
+        let mut request = Request::builder();
+        let mut request = request.uri(uri).method(meth);
         let mut request_headers: Vec<ReqHeader> = Vec::new();
 
-        Req::add_payload(&mut request, payload);
         // We must add the headers afterwards in case they want to override the headers
         // set by add_payload.
-        Req::add_request_headers(&mut request, &mut custom_headers);
+        let mut request = Req::add_request_headers(&mut request, &mut custom_headers);
         Req::copy_request_headers(&mut request, &mut request_headers);
+        let request = Req::add_payload(&mut request, payload);
         
         let mut core = core.unwrap();
         let handle = core.handle();
@@ -292,7 +287,7 @@ impl Req {
             .build::<HttpsConnector<hyper::client::HttpConnector>, hyper::Body>(HttpsConnector::new(4).unwrap());
 
         let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
-        let work = client.request(request).select2(timeout)
+        let work = client.request(request.unwrap()).select2(timeout)
             .then(|res| match res{
                 Ok(Either::A((res, _))) => Ok(res), // request sucecss
                 Ok(Either::B((_timeout, _))) => Err(ReqError {
@@ -329,8 +324,8 @@ impl Req {
             // NOTE: This must be done with the reactor core!
             // Without it this will block indefinitely if the stream contains more information
             // than can be retrieved with the initial poll.
-            let raw_response_body = core.run(response.body().concat2());
 
+            let raw_response_body = core.run(response.into_body().concat2());
             if raw_response_body.is_err() {
                 return Err(ReqError {
                     exit_code: FailureCode::IOError,
@@ -338,8 +333,9 @@ impl Req {
                 });
             }
 
-            let raw_response_body = raw_response_body.unwrap();
-            response_body.extend_from_slice(&*raw_response_body);
+            //let raw_response_body = response.into_body();
+            let data  = raw_response_body.unwrap();
+            response_body.extend_from_slice(&(*data));
 
             let req_response = ReqResponse::new(
                 response_headers, 
@@ -373,9 +369,6 @@ impl Req {
 
     fn match_hyper_error(err: Option<error::Error>) -> ReqError
     {
-        use self::error::Error;
-        use std::io::ErrorKind;
-
         if err.is_none() {
             ReqError {
                 exit_code: FailureCode::ClientError,
@@ -411,44 +404,52 @@ impl Req {
                 };
             }
 
+            /*
             let desc = if let Some(e) = err.into_cause() {
-                format!("{}", e).as_str()
+                let s = format!("{}", e);
+                &s
             } else {
                 "Unknown error."
             };
+            */
 
             ReqError {
                 exit_code: FailureCode::ClientError,
-                description: desc
+                description: "Unknown error."
             }
         }
     }
 
-    fn add_payload<S>(
-        req: &mut Request<S>,
-        payload: Payload)
+    fn add_payload<'a>(req: &'a mut &'a mut Builder, payload: Payload)
+        -> std::result::Result<hyper::Request<hyper::Body>, hyper::http::Error> 
     {
         let ctt = payload.content_type().clone();
         if let ReqContentType::Empty = ctt {
-            req.headers_mut().insert("Content-Length", HeaderValue::from_str("0").unwrap());
+            //req.headers_mut().insert("Content-Length", HeaderValue::from_str("0").unwrap());
+            req.header("Content-Length", 0);
         }
 
+        req.header("Content-Type", payload.content_type_str());
+        req.header("Content-Length", payload.data.len());
+        /*
         req.headers_mut().insert("Content-Type", 
                                  HeaderValue::from_str(payload.content_type_str()).unwrap());
         req.headers_mut().insert("Content-Length", 
                                  HeaderValue::from_str(
                                      format!("{}", payload.data.len()).as_str()).unwrap());
+         */
         let data = payload.data();
-        req.set_body(data);
+
+        return req.body(hyper::Body::from(data));
     }
 
     /// Converts and copies all of the headers from the request to the given vector.
     /// Used to return the headers from the request with the `ReqCommandResult`.
-    fn copy_request_headers<S>(
-        req: &mut Request<S>,
+    fn copy_request_headers(
+        req: &mut &mut Builder,
         copy_to: &mut Vec<ReqHeader>)
     {
-        req.headers().iter().for_each(|header|{
+        req.headers_ref().unwrap().iter().for_each(|header|{
             let name = String::from(header.0.as_str());
             let value = String::from(header.1.to_str().unwrap());
             let r_header = ReqHeader{
@@ -458,18 +459,23 @@ impl Req {
 
             copy_to.push(r_header);
         });
-
     }
 
-
     /// Adds all headers in `headers` to the request.
-    fn add_request_headers<S>(
-        req: &mut Request<S>,
-        headers: &mut Vec<(String, String)>)
+    fn add_request_headers<'a>(req: &'a mut &'a mut Builder,
+                           headers: &mut Vec<(String, String)>)
+        -> &'a mut &'a mut Builder
     {
+        use hyper::http::header::HeaderValue;
+        use hyper::http::header::HeaderName;
         headers.iter().for_each(|header|{
-            req.headers_mut().insert(header.0.clone().as_str(),
-                                     HeaderValue::from_str(header.1.clone()).unwrap());
+            let headername = HeaderName::from_lowercase(header.0.as_bytes()); 
+            req.headers_mut().unwrap().insert(headername.unwrap(),
+                                              HeaderValue::from_str(header.1.clone().as_str()).unwrap());
+            //req.headers_mut().insert(header.0.clone().as_str(),
+                                     //HeaderValue::from_str(header.1.clone()).unwrap());
         });
+
+        return req;
     }
 }

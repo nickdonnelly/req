@@ -291,7 +291,7 @@ impl ReqContentType {
    /// ```
    pub fn from_extension(ext: &str) -> ReqContentType
    {
-       ReqContentType::from_str(ext.trim_left_matches('.')).unwrap()
+       ReqContentType::from_str(ext.trim_start_matches('.')).unwrap()
    }
 
    pub fn as_str(&self) -> &str {

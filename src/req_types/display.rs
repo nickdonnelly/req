@@ -27,7 +27,7 @@ impl Display for ReqConfig {
         
         let command_string = match  &self.command {
             &ReqCommand::Request(ref method) => {
-                let mut request_string = format!("Request with HTTP method {}\n", method);
+                let request_string = format!("Request with HTTP method {}\n", method);
 
                 let host_string = if self.host.is_some() {
                     self.host.clone().unwrap()

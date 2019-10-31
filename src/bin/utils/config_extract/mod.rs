@@ -16,17 +16,17 @@ pub fn setup_socket<'a>(socket_matches: &ArgMatches<'a>, cfg: ReqConfig) -> ReqC
                 println!("Couldn't parse response-code. Make sure you chose a valid one!");
                 process::exit(FailureCode::ClientError.value() as i32);
             } else {
-                match StatusCode::try_from(code_int.unwrap()) {
+                match StatusCode::from_u16(code_int.unwrap()) {
                     Ok(s) => s,
-                    Err(_) => StatusCode::Ok
+                    Err(_) => StatusCode::OK
                 }
             };
             code
         },
-        None => StatusCode::Ok 
+        None => StatusCode::OK
     };
 
-    let cfg = if response_code != StatusCode::Ok {
+    let cfg = if response_code != StatusCode::OK {
         cfg.option(ReqOption::CustomSocketResponseCode(response_code))
     } else {
         cfg
@@ -185,9 +185,6 @@ pub fn print_flags<'a>(print_flags: Option<Values<'a>>, cfg: ReqConfig)
 pub fn redirect_flag<'a>(redirect_arg: Option<&'a str>, cfg: ReqConfig)
     -> ReqConfig
 {
-    use reqlib::FailureCode;
-    use std::process;
-
     if redirect_arg.is_some() {
         let prov_str = redirect_arg.unwrap();
         let prov = String::from(prov_str); // for printing if error
@@ -213,9 +210,6 @@ pub fn redirect_flag<'a>(redirect_arg: Option<&'a str>, cfg: ReqConfig)
 pub fn timeout_flag<'a>(timeout_arg: Option<&'a str>, cfg: ReqConfig)
     -> ReqConfig
 {
-    use std::process;
-    use reqlib::FailureCode;
-
     if timeout_arg.is_some() {
         let timeout = timeout_arg.unwrap().trim().parse::<usize>();
 
@@ -239,9 +233,6 @@ pub fn payload_arg<'a>(
     cfg: ReqConfig) 
     -> ReqConfig 
 {
-    use std::process;
-    use reqlib::FailureCode;
-
     if payload_arg.is_some() {
         let filename = payload_arg.unwrap();
         let payload = Payload::from_file(filename.clone());
@@ -301,7 +292,6 @@ pub fn header_file_flag(header_file: Option<&str>, cfg: ReqConfig) -> ReqConfig
     use std::fs::File;
     use std::error::Error;
     use std::io::{ BufRead, BufReader };
-    use std::process;
 
     match header_file {
         None => cfg,

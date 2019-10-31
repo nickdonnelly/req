@@ -1,4 +1,4 @@
-use hyper::{ self, Body, Response, Server, StatusCode, HeaderMap };
+use hyper::{ self, Body, Response, Server, StatusCode, HeaderMap, Method };
 use hyper::service::service_fn_ok;
 use colored::*;
 
@@ -22,20 +22,23 @@ impl QuickSocket {
         }
     }
 
-    pub fn start(self, port: u16, sc: StatusCode)
+    pub fn start(self, port: u16)
     {
-        let mut addr = ([127, 0, 0, 1], port).into();
+        let addr = ([127, 0, 0, 1], port).into();
 
         if let SocketType::Literal(lit) = self.socket_type {
-            let mk_srv = || {
-                service_fn_ok(|_req| {
-                    Response::new(Body::from(lit))
+            let mk_srv = move || {
+                let copied = String::from(lit.clone());
+                service_fn_ok(move |_req| {
+                    let new_copied = copied.clone();
+                    Response::new(Body::from(new_copied))
                 })
             };
 
             let server = Server::bind(&addr)
                 .serve(mk_srv);
 
+            use futures::Future;
             hyper::rt::run(server.map_err(|err| {
                 eprintln!("Problem with hyper server: {}", err);
             }));
@@ -60,7 +63,6 @@ impl QuickSocket {
 
 
 /// Return a body that is the pretty version of the given request.
-/*
 pub fn pretty_print(headers: HeaderMap, req_meth: Method, req_path: String) -> String 
 {
     let mut headerstring = String::new();
@@ -71,13 +73,12 @@ pub fn pretty_print(headers: HeaderMap, req_meth: Method, req_path: String) -> S
     headerstring.push_str(&format!("{}", "---Headers---\n".cyan()));
     for headerview in headers.iter() {
         headerstring.push_str(
-            &format!("{}{} {}\n", headerview.name().bold(), ":".bold(), headerview.value_string())
+            &format!("{}{} {}\n", headerview.0.as_str().bold(), ":".bold(), headerview.1.to_str().unwrap())
         );
     }
     headerstring.push_str(format!("{}", "---Body---\n".red()).as_str());
     headerstring
 }
-*/
 
 /// Struct used to respond to requests with their body
 struct EchoService {
