@@ -132,6 +132,7 @@ impl Req {
         let qs = QuickSocket::new(socket_type);
         println!("Starting socket on  127.0.0.1:{}", &port);
         qs.start(port);
+        println!("Started socket on  127.0.0.1:{}", &port);
         Ok(ReqCommandResult::new_stub()) // we never get here.
     }
 
@@ -281,10 +282,11 @@ impl Req {
         
         let mut core = core.unwrap();
         let handle = core.handle();
+        let https = HttpsConnector::new();
         let client = Client::builder()
             .keep_alive(false)
             .set_host(true)
-            .build::<HttpsConnector<hyper::client::HttpConnector>, hyper::Body>(HttpsConnector::new(4).unwrap());
+            .build::<, hyper::Body>(https);
 
         let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
         let work = client.request(request.unwrap()).select2(timeout)

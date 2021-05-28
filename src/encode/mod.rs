@@ -21,7 +21,7 @@ impl Encoding {
 }
 
 pub trait Encoder {
-    fn encode(&self, &mut Payload) -> Result<(), EncodeError>;
+    fn encode(&self, payload: &mut Payload) -> Result<(), EncodeError>;
 }
 
 #[derive(Debug)]

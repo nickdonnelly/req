@@ -1,5 +1,7 @@
-use hyper::{ self, Body, Response, Server, StatusCode, HeaderMap, Method };
+use hyper::{ self, Body, Request, Response, Server, StatusCode, HeaderMap, Method };
 use hyper::service::service_fn_ok;
+use hyper::service::{make_service_fn, service_fn};
+use std::convert::Infallible;
 use colored::*;
 
 pub struct QuickSocket {
@@ -13,6 +15,10 @@ pub enum SocketType {
 }
 
 impl QuickSocket {
+    async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
+        Ok(Response::new("Hello, World".into()))
+    }
+    
     /// Returns an instance of QuickSocket ready to open on 
     /// @param t The type of socket you'd like (talkback or literal)
     pub fn new(t: SocketType) -> QuickSocket
@@ -43,20 +49,20 @@ impl QuickSocket {
                 eprintln!("Problem with hyper server: {}", err);
             }));
         } 
-        /*
-        if let SocketType::Literal(lit) = self.socket_type {
-            let server = Http::new().keep_alive(false).bind(&addr, move || Ok(OkService{
-                status_code: sc,
-                phrase: lit.clone() // this has to be here otherwise it only fulfills FnOnce, not Fn
-            })).unwrap();
-            server.run().unwrap()
-        } else { // default to talkback, other clauses to go here if more are added
-            let server = Http::new().keep_alive(false).bind(&addr, move || Ok(EchoService{
-                status_code: sc
-            })).unwrap();
-            server.run().unwrap()
-        }
-        */
+
+        let make_svc = make_service_fn(|_conn| async {
+            Ok::<_, Infallible>(service_fn(hello_world))
+        });
+
+        let server = Server::bind(&addr).serve(make_svc);
+        
+        //if let SocketType::Literal(lit) = self.socket_type {
+        //} else { // default to talkback, other clauses to go here if more are added
+         //   let server = Http::new().keep_alive(false).bind(&addr, move || Ok(EchoService{
+          //      status_code: StatusCode::OK
+           // })).unwrap();
+            //server.run().unwrap()
+        //}
     }
 
 }
