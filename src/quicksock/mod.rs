@@ -44,10 +44,6 @@ impl QuickSocket {
             let server = Server::bind(&addr)
                 .serve(mk_srv);
 
-            use futures::Future;
-            hyper::rt::run(server.map_err(|err| {
-                eprintln!("Problem with hyper server: {}", err);
-            }));
         } 
 
         let make_svc = make_service_fn(|_conn| async {

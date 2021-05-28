@@ -1,7 +1,7 @@
 use hyper::Request;
-use hyper::error;
 use hyper::Uri;
 use hyper::http::request::Builder;
+use hyper::client::Client;
 use tokio_core::reactor::Timeout;
 use futures::future::{ Future, Either };
 use futures::stream::Stream;
@@ -60,7 +60,7 @@ impl Req {
                         let redirect_place = if redirect_place.starts_with("/") {
                             let hyper_uri = config.host.clone().unwrap().parse::<Uri>().unwrap();
                             let scheme = hyper_uri.scheme_str().unwrap_or("http://");
-                            let authority = hyper_uri.authority_part().unwrap().as_str();
+                            let authority = hyper_uri.authority().unwrap().as_str();
 
                             format!("{}{}{}", scheme, authority, redirect_place)
                         } else {
@@ -286,7 +286,7 @@ impl Req {
         let client = Client::builder()
             .keep_alive(false)
             .set_host(true)
-            .build::<, hyper::Body>(https);
+            .build::<_, hyper::Body>(https);
 
         let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
         let work = client.request(request.unwrap()).select2(timeout)
@@ -369,7 +369,7 @@ impl Req {
         None
     }
 
-    fn match_hyper_error(err: Option<error::Error>) -> ReqError
+    fn match_hyper_error(err: Option<hyper::Error>) -> ReqError
     {
         if err.is_none() {
             ReqError {
