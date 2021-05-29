@@ -1,6 +1,5 @@
 use hyper::{ self, Method, StatusCode };
 use hyper_tls::HttpsConnector;
-use tokio_core::reactor::Core;
 
 use super::encode::Encoding;
 use super::options::*;

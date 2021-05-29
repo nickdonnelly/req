@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 extern crate hyper;
 extern crate hyper_tls;
-extern crate tokio_core;
+#[macro_use] extern crate tokio;
 extern crate futures;
 extern crate bytes;
 extern crate regex;

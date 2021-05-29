@@ -5,9 +5,9 @@ edition = "2018"
 authors = ["Nicholas Donnelly <nick@donnelly.cc>"]
 
 [dependencies]
-hyper = "0.14"
+hyper = { version = "0.14", features = [ "full" ] }
 hyper-tls = "0.5.0"
-tokio-core = "0.1.10"
+tokio = { version = "1", features = [ "full" ] }
 dotenv = "0.10.1"
 futures = "0.1"
 clap = "2"

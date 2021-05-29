@@ -1,8 +1,7 @@
-use hyper::Request;
+use hyper::{ Response, Request };
 use hyper::Uri;
 use hyper::http::request::Builder;
 use hyper::client::Client;
-use tokio_core::reactor::Timeout;
 use futures::future::{ Future, Either };
 use futures::stream::Stream;
 use super::*;
@@ -20,7 +19,6 @@ impl Req {
     /// Get a new Req instance from a config.
     pub fn new_from_cfg(cfg: ReqConfig) 
         -> Result<Req> {
-      
         Ok(Req{
             cfg: cfg,
         })
@@ -117,7 +115,7 @@ impl Req {
     #[inline(always)]
     fn run_socket(self, port: u16) -> Result<ReqCommandResult>
     {
-        use quicksock::{ QuickSocket, SocketType };
+        use super::super::quicksock::{ SocketType, QuickSocket };
 
         let options: Vec<ReqOption> = Req::clone_options(self.cfg.options.as_slice());
         let mut socket_type = SocketType::Talkback;
@@ -163,6 +161,7 @@ impl Req {
     #[inline(always)]
     fn run_extract_assets(self) -> Result<ReqCommandResult>
     {
+        /*
         use super::super::asset_extract;
         use rand::Rng;
         use std::fs::{ self };
@@ -230,17 +229,18 @@ impl Req {
             let mut file = fs::File::create(saveLoc).unwrap();
             file.write_all(&res.body).unwrap();
         }
-        
+        */
         Ok(ReqCommandResult::new_stub())
     }
 
     #[inline(always)]
-    fn run_request(self) -> Result<ReqCommandResult> {
+    #[tokio::main]
+    async fn run_request(self) -> Result<ReqCommandResult> {
         let err = self.validate_request_config();
         if err.is_some() {
             return Err(err.unwrap());
         }
-       
+
         let host_str = self.cfg.host.clone().unwrap();
         let meth = self.cfg.command.as_method().unwrap();
         let timeout = self.cfg.timeout.clone().unwrap();
@@ -262,33 +262,24 @@ impl Req {
             };
         });
 
-        
-        let core = Core::new();
-        if core.is_err() {
-            return Err(ReqError { 
-                exit_code: FailureCode::IOError, 
-                description: "Unable to fetch event loop."});
-        }
- 
+
         let mut request = Request::builder();
         let mut request = request.uri(uri).method(meth);
         let mut request_headers: Vec<ReqHeader> = Vec::new();
 
         // We must add the headers afterwards in case they want to override the headers
         // set by add_payload.
-        let mut request = Req::add_request_headers(&mut request, &mut custom_headers);
-        Req::copy_request_headers(&mut request, &mut request_headers);
-        let request = Req::add_payload(&mut request, payload);
-        
-        let mut core = core.unwrap();
-        let handle = core.handle();
+        Req::add_request_headers(&mut request, &mut custom_headers);
+        let mut request = Req::copy_request_headers(request, &mut request_headers);
+        let request = Req::add_payload(request, payload);
+
         let https = HttpsConnector::new();
         let client = Client::builder()
-            .keep_alive(false)
             .set_host(true)
             .build::<_, hyper::Body>(https);
 
-        let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
+        //let timeout = Timeout::new(Duration::from_millis(timeout as u64), &handle).unwrap();
+        /*
         let work = client.request(request.unwrap()).select2(timeout)
             .then(|res| match res{
                 Ok(Either::A((res, _))) => Ok(res), // request sucecss
@@ -303,15 +294,15 @@ impl Req {
                         description: "Something went wrong measuring the timeout...Doh!"
                     })
             });
+        */
 
-        let response = core.run(work);
+        let mut response = client.request(request.unwrap()).await.unwrap();
+        use hyper::body::to_bytes;
+        let body_bytes = to_bytes(response.body_mut()).await.unwrap();
 
-        if response.is_ok() {
-            let response = response.unwrap();
-
-            let mut response_body = Vec::new();
+        if response.status().is_success() {
             let mut response_headers: Vec<ReqHeader> = Vec::new();
-            
+
             // == Extract the headers ==
             response.headers().iter().for_each(|(key, value)| {
                 let key = key.as_str();
@@ -322,40 +313,18 @@ impl Req {
             // == Extract the response status ==
             let response_status = ReqResponseStatus::from(response.status());
 
-            // == Extract the body ==
-            // NOTE: This must be done with the reactor core!
-            // Without it this will block indefinitely if the stream contains more information
-            // than can be retrieved with the initial poll.
-
-            let raw_response_body = core.run(response.into_body().concat2());
-            if raw_response_body.is_err() {
-                return Err(ReqError {
-                    exit_code: FailureCode::IOError,
-                    description: "Could not read from body stream."
-                });
-            }
-
-            //let raw_response_body = response.into_body();
-            let data  = raw_response_body.unwrap();
-            response_body.extend_from_slice(&(*data));
-
             let req_response = ReqResponse::new(
-                response_headers, 
+                response_headers,
                 response_status,
-                response_body, 
+                body_bytes.to_vec(),
                 request_headers);
 
             Ok(ReqCommandResult::new_response(req_response, self))
         } else {
-            let response_error = response.err();
-            if response_error.is_none() {
-                Err(ReqError {
-                    exit_code: FailureCode::ClientError,
-                    description: "Silent failure! No error returned!"
-                })
-            } else {
-                Err(response_error.unwrap())
-            }
+            Err(ReqError {
+                exit_code: FailureCode::ClientError,
+                description: "Silent failure! No error returned!"
+            })
         }
     }
 
@@ -422,34 +391,28 @@ impl Req {
         }
     }
 
-    fn add_payload<'a>(req: &'a mut &'a mut Builder, payload: Payload)
+    fn add_payload<'a>(mut req: Builder, payload: Payload)
         -> std::result::Result<hyper::Request<hyper::Body>, hyper::http::Error> 
     {
+        use hyper::header::HeaderValue;
         let ctt = payload.content_type().clone();
         if let ReqContentType::Empty = ctt {
             //req.headers_mut().insert("Content-Length", HeaderValue::from_str("0").unwrap());
-            req.header("Content-Length", 0);
+            req.headers_mut().unwrap().append("Content-Length", HeaderValue::from_static("0"));
         }
 
-        req.header("Content-Type", payload.content_type_str());
-        req.header("Content-Length", payload.data.len());
-        /*
-        req.headers_mut().insert("Content-Type", 
-                                 HeaderValue::from_str(payload.content_type_str()).unwrap());
-        req.headers_mut().insert("Content-Length", 
-                                 HeaderValue::from_str(
-                                     format!("{}", payload.data.len()).as_str()).unwrap());
-         */
+        req.headers_mut().unwrap().append("Content-Type", HeaderValue::from_str(payload.content_type_str()).unwrap());
+        req.headers_mut().unwrap().append("Content-Length", HeaderValue::from(payload.data.len()));
         let data = payload.data();
 
-        return req.body(hyper::Body::from(data));
+        req.body(hyper::Body::from(data))
     }
 
     /// Converts and copies all of the headers from the request to the given vector.
     /// Used to return the headers from the request with the `ReqCommandResult`.
     fn copy_request_headers(
-        req: &mut &mut Builder,
-        copy_to: &mut Vec<ReqHeader>)
+        mut req: Builder,
+        copy_to: &mut Vec<ReqHeader>) -> Builder
     {
         req.headers_ref().unwrap().iter().for_each(|header|{
             let name = String::from(header.0.as_str());
@@ -461,12 +424,14 @@ impl Req {
 
             copy_to.push(r_header);
         });
+
+        req
     }
 
     /// Adds all headers in `headers` to the request.
-    fn add_request_headers<'a>(req: &'a mut &'a mut Builder,
-                           headers: &mut Vec<(String, String)>)
-        -> &'a mut &'a mut Builder
+    fn add_request_headers<'a>(req: &'a mut Builder,
+                               headers: &mut Vec<(String, String)>)
+        -> &'a mut Builder
     {
         use hyper::http::header::HeaderValue;
         use hyper::http::header::HeaderName;

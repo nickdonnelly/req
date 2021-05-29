@@ -1,4 +1,6 @@
-use hyper::{ self, Body, Server, Request, Response, StatusCode, HeaderMap, Method };
+use hyper::{ self, Body, Request, Response, StatusCode, HeaderMap, Method };
+use hyper server::Server;
+use hyper::service::service_fn_ok;
 use hyper::service::{make_service_fn, service_fn};
 use std::convert::Infallible;
 use colored::*;
@@ -13,11 +15,10 @@ pub enum SocketType {
     Literal(String)
 }
 
-async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
-    Ok(Response::new("Hello, World".into()))
-}
-
 impl QuickSocket {
+    async fn hello_world(_req: Request<Body>) -> Result<Response<Body>, Infallible> {
+        Ok(Response::new("Hello, World".into()))
+    }
 
     /// Returns an instance of QuickSocket ready to open on 
     /// @param t The type of socket you'd like (talkback or literal)
@@ -32,12 +33,26 @@ impl QuickSocket {
     {
         let addr = ([127, 0, 0, 1], port).into();
 
+        if let SocketType::Literal(lit) = self.socket_type {
+            let mk_srv = move || {
+                let copied = String::from(lit.clone());
+                service_fn_ok(move |_req| {
+                    let new_copied = copied.clone();
+                    Response::new(Body::from(new_copied))
+                })
+            };
+
+            let server = Server::bind(&addr)
+                .serve(mk_srv);
+
+        } 
+
         let make_svc = make_service_fn(|_conn| async {
             Ok::<_, Infallible>(service_fn(hello_world))
         });
 
         let server = Server::bind(&addr).serve(make_svc);
-
+        
         //if let SocketType::Literal(lit) = self.socket_type {
         //} else { // default to talkback, other clauses to go here if more are added
          //   let server = Http::new().keep_alive(false).bind(&addr, move || Ok(EchoService{
