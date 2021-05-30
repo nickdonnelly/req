@@ -15,7 +15,8 @@ use std::process;
 
 mod utils;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     dotenv().ok(); // Add the dotenv environment variables to env::vars
     let mut config = ReqConfig::new()
         .global_defaults()

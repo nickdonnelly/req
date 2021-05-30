@@ -28,7 +28,7 @@ impl QuickSocket {
         }
     }
 
-    pub fn start(self, port: u16)
+    pub async fn start(self, port: u16)
     {
         let addr = ([127, 0, 0, 1], port).into();
 
@@ -37,6 +37,9 @@ impl QuickSocket {
         });
 
         let server = Server::bind(&addr).serve(make_svc);
+        if let Err(e) = server.await {
+            println!("server error: {}", e);
+        }
 
         //if let SocketType::Literal(lit) = self.socket_type {
         //} else { // default to talkback, other clauses to go here if more are added
